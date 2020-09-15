@@ -7,9 +7,9 @@ class MainApplication(tk.Frame):
         super().__init__(root,  bg="black", relief="ridge", bd=6)
         self.root = root
         self.pack(fill="both", expand=True)
-        self.columnconfigure(0, weight=1)
+        self.columnconfigure(0, weight=0)
         self.columnconfigure(1, weight=1)
-        self.rowconfigure(0, weight=1)
+        self.rowconfigure(0, weight=0)
         self.rowconfigure(1, weight=1)
 
         self.root.option_add("*tearOff", False)
@@ -42,11 +42,11 @@ class MainApplication(tk.Frame):
         frm_scramble.grid(row=0, column=1, sticky="wen")
 
         frm_timer = tk.Frame(self, bg="blue", relief="ridge", bd=2)
-        frm_timer.grid(row=1, column=1, sticky="es")
+        frm_timer.grid(row=1, column=1)
 
         # Scramble area
         self.var_scramble = tk.StringVar(frm_scramble, value="Some long WCA 3x3x3 scramble")
-        lbl_scramble = tk.Label(frm_scramble, textvariable=self.var_scramble)
+        lbl_scramble = tk.Label(frm_scramble, textvariable=self.var_scramble, font="Times, 20")
         lbl_scramble.pack()
 
         # Left side area
@@ -119,12 +119,12 @@ class MainApplication(tk.Frame):
         canvas_times.create_window((0, 0), window=frm_canvas_frame, anchor="nw")
         frm_canvas_frame.bind("<Configure>", lambda event: self.on_frame_configure(canvas_times))
 
-        for i in range(50):
+        for i in range(25):
             tk.Label(frm_canvas_frame, text=f"{i}. 0.00").grid(row=i, column=0)
 
         # Timer area
         self.var_time = tk.DoubleVar(frm_timer, value=0.0)
-        lbl_time = tk.Label(frm_timer, textvariable=self.var_time, font="Times, 50")
+        lbl_time = tk.Label(frm_timer, textvariable=self.var_time, font="Times, 70")
         lbl_time.pack()
 
     def on_frame_configure(self, canvas):
