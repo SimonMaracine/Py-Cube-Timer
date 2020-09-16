@@ -1,5 +1,7 @@
 import tkinter as tk
 
+from src.timer import Timer
+
 
 class MainApplication(tk.Frame):
 
@@ -101,6 +103,7 @@ class MainApplication(tk.Frame):
         # Session mean
         self.var_session_mean = tk.StringVar(frm_left_side, value="0.00")
         lbl_session_mean = tk.Label(frm_left_side, textvariable=self.var_session_mean, font="Times, 18")
+
         lbl_session_mean.grid(row=2, column=0)
 
         # Times
@@ -123,12 +126,33 @@ class MainApplication(tk.Frame):
             tk.Label(frm_canvas_frame, text=f"{i}. 0.00").grid(row=i, column=0)
 
         # Timer area
-        self.var_time = tk.DoubleVar(frm_timer, value=0.0)
+        self.var_time = tk.StringVar(frm_timer, value="0.00")
         lbl_time = tk.Label(frm_timer, textvariable=self.var_time, font="Times, 70")
         lbl_time.pack()
 
+        self.timer = Timer(self.var_time)
+        self.root.bind("<KeyPress>", self.on_key_press)
+        self.root.bind("<KeyRelease>", self.on_key_release)
+
+        self.stopped_timer = False
+
     def on_frame_configure(self, canvas):
         canvas.configure(scrollregion=canvas.bbox("all"))
+
+    def on_key_press(self, event):
+        if self.timer.is_running() and not self.timer.is_inspecting():
+            self.timer.stop()
+            self.stopped_timer = True
+            print("Called timer STOP")
+
+    def on_key_release(self, event):
+        if event.char == " ":
+            if not self.stopped_timer:
+                if not self.timer.is_running() or self.timer.is_inspecting():
+                    self.timer.start()
+                    print("Called timer start")
+            else:
+                self.stopped_timer = False
 
 
 def main():
