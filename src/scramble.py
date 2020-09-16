@@ -6,7 +6,7 @@ import random
 from typing import List
 
 
-class BasicMove(enum.Enum):
+class _BasicMove(enum.Enum):
     R = "R"
     L = "L"
     U = "U"
@@ -15,41 +15,41 @@ class BasicMove(enum.Enum):
     B = "B"
 
 
-class Modifier(enum.Enum):
+class _Modifier(enum.Enum):
     NONE = ""
     PRIME = "'"
     TWO = "2"
 
 
 @dataclasses.dataclass
-class Move:
-    basic_move: BasicMove
-    modifier: Modifier
+class _Move:
+    basic_move: _BasicMove
+    modifier: _Modifier
 
     def combined(self) -> str:
         return self.basic_move.value + self.modifier.value
 
-    def is_opposite(self, other: Move) -> bool:
-        if self.basic_move == BasicMove.R:
-            return other.basic_move == BasicMove.L
-        elif self.basic_move == BasicMove.L:
-            return other.basic_move == BasicMove.R
-        elif self.basic_move == BasicMove.U:
-            return other.basic_move == BasicMove.D
-        elif self.basic_move == BasicMove.D:
-            return other.basic_move == BasicMove.U
-        elif self.basic_move == BasicMove.F:
-            return other.basic_move == BasicMove.B
-        elif self.basic_move == BasicMove.B:
-            return other.basic_move == BasicMove.F
+    def is_opposite(self, other: _Move) -> bool:
+        if self.basic_move == _BasicMove.R:
+            return other.basic_move == _BasicMove.L
+        elif self.basic_move == _BasicMove.L:
+            return other.basic_move == _BasicMove.R
+        elif self.basic_move == _BasicMove.U:
+            return other.basic_move == _BasicMove.D
+        elif self.basic_move == _BasicMove.D:
+            return other.basic_move == _BasicMove.U
+        elif self.basic_move == _BasicMove.F:
+            return other.basic_move == _BasicMove.B
+        elif self.basic_move == _BasicMove.B:
+            return other.basic_move == _BasicMove.F
 
 
-ALL_BASIC_MOVES = (BasicMove.R, BasicMove.L, BasicMove.U, BasicMove.D, BasicMove.F, BasicMove.B)
-ALL_MODIFIERS = (Modifier.NONE, Modifier.PRIME, Modifier.TWO)
+_ALL_BASIC_MOVES = (_BasicMove.R, _BasicMove.L, _BasicMove.U, _BasicMove.D, _BasicMove.F, _BasicMove.B)
+_ALL_MODIFIERS = (_Modifier.NONE, _Modifier.PRIME, _Modifier.TWO)
 
 
 def generate_scramble() -> str:
-    moves: List[Move] = []
+    moves: List[_Move] = []
 
     while len(moves) < 20:
         _append_move(moves)
@@ -58,9 +58,9 @@ def generate_scramble() -> str:
     return " ".join(final)
 
 
-def _append_move(moves: List[Move]):
+def _append_move(moves: List[_Move]):
     while True:
-        move = Move(random.choice(ALL_BASIC_MOVES), random.choice(ALL_MODIFIERS))
+        move = _Move(random.choice(_ALL_BASIC_MOVES), random.choice(_ALL_MODIFIERS))
 
         try:
             if moves[-1].basic_move == move.basic_move:
