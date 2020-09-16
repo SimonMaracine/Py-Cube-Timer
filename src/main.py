@@ -4,6 +4,7 @@ import threading
 import tkinter as tk
 
 from src.timer import Timer
+from src.scramble import generate_scramble
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -52,7 +53,7 @@ class MainApplication(tk.Frame):
         frm_timer.grid(row=1, column=1)
 
         # Scramble area
-        self.var_scramble = tk.StringVar(frm_scramble, value="Some long WCA 3x3x3 scramble")
+        self.var_scramble = tk.StringVar(frm_scramble, value=generate_scramble())
         lbl_scramble = tk.Label(frm_scramble, textvariable=self.var_scramble, font="Times, 20")
         lbl_scramble.pack()
 
@@ -132,7 +133,7 @@ class MainApplication(tk.Frame):
 
         # Timer area
         self.var_time = tk.StringVar(frm_timer, value="0.00")
-        lbl_time = tk.Label(frm_timer, textvariable=self.var_time, font="Times, 70")
+        lbl_time = tk.Label(frm_timer, textvariable=self.var_time, font="Times, 80")
         lbl_time.pack()
 
         self.timer = Timer(self.var_time)
@@ -143,6 +144,7 @@ class MainApplication(tk.Frame):
         self.stopped_timer = False
 
         # Variables to fix the key repeating functionality
+        # There is still the bug that there are two key presses registered, if holding down a key
         self.last_press_time = 0
         self.last_release_time = 0
 
@@ -154,6 +156,7 @@ class MainApplication(tk.Frame):
         if self.timer.is_running() and not self.timer.is_inspecting():
             self.timer.stop()
             self.stopped_timer = True
+            self.save_time_in_session()
             logging.debug("Timer STOP")
 
     def on_key_release(self, event):
@@ -165,6 +168,9 @@ class MainApplication(tk.Frame):
                     logging.debug("Timer START")
             else:
                 self.stopped_timer = False
+
+    def save_time_in_session(self):
+        self.var_scramble.set(generate_scramble())
 
     # Code copied from the internet and modified
     def kt_is_pressed(self):
