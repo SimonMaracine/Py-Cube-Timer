@@ -1,6 +1,11 @@
+import logging
+import time
+import threading
 import tkinter as tk
 
 from src.timer import Timer
+
+logging.basicConfig(level=logging.DEBUG)
 
 
 class MainApplication(tk.Frame):
@@ -131,28 +136,53 @@ class MainApplication(tk.Frame):
         lbl_time.pack()
 
         self.timer = Timer(self.var_time)
-        self.root.bind("<KeyPress>", self.on_key_press)
-        self.root.bind("<KeyRelease>", self.on_key_release)
+        self.root.bind("<KeyPress>", self.kt_report_key_press)
+        self.root.bind("<KeyRelease>", self.kt_report_key_release)
 
+        # Flag to handle timer start
         self.stopped_timer = False
+
+        # Variables to fix the key repeating functionality
+        self.last_press_time = 0
+        self.last_release_time = 0
 
     def on_frame_configure(self, canvas):
         canvas.configure(scrollregion=canvas.bbox("all"))
 
     def on_key_press(self, event):
+        print("KEY PRESSED")
         if self.timer.is_running() and not self.timer.is_inspecting():
             self.timer.stop()
             self.stopped_timer = True
-            print("Called timer STOP")
+            logging.debug("Timer STOP")
 
     def on_key_release(self, event):
+        print("KEY RELEASED")
         if event.char == " ":
             if not self.stopped_timer:
                 if not self.timer.is_running() or self.timer.is_inspecting():
                     self.timer.start()
-                    print("Called timer start")
+                    logging.debug("Timer START")
             else:
                 self.stopped_timer = False
+
+    # Code copied from the internet and modified
+    def kt_is_pressed(self):
+        return time.time() - self.last_press_time < 0.1
+
+    def kt_report_key_press(self, event):
+        if not self.kt_is_pressed():
+            self.on_key_press(event)  # The actual event
+        self.last_press_time = time.time()
+
+    def kt_report_key_release(self, event):
+        timer = threading.Timer(0.1, self.kt_report_key_release_callback, args=(event,))
+        timer.start()
+
+    def kt_report_key_release_callback(self, event):
+        if not self.kt_is_pressed():
+            self.on_key_release(event)  # The actual event
+        self.last_release_time = time.time()
 
 
 def main():
