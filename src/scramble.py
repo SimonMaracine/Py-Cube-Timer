@@ -44,8 +44,8 @@ class _Move:
             return other.basic_move == _BasicMove.F
 
 
-_ALL_BASIC_MOVES = (_BasicMove.R, _BasicMove.L, _BasicMove.U, _BasicMove.D, _BasicMove.F, _BasicMove.B)
-_ALL_MODIFIERS = (_Modifier.NONE, _Modifier.PRIME, _Modifier.TWO)
+_ALL_BASIC_MOVES = [move for move in _BasicMove]
+_ALL_MODIFIERS = [modifier for modifier in _Modifier]
 
 
 def generate_scramble() -> str:

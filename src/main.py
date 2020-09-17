@@ -133,7 +133,7 @@ class MainApplication(tk.Frame):
 
         # Timer area
         self.var_time = tk.StringVar(frm_timer, value="0.00")
-        lbl_time = tk.Label(frm_timer, textvariable=self.var_time, font="Times, 80")
+        lbl_time = tk.Label(frm_timer, textvariable=self.var_time, font="Times, 90")
         lbl_time.pack()
 
         self.timer = Timer(self.var_time)
