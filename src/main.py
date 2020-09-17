@@ -137,6 +137,7 @@ class MainApplication(tk.Frame):
         lbl_time.pack()
 
         self.timer = Timer(self.var_time)
+        self.timer.with_inspection = True
         self.root.bind("<KeyPress>", self.kt_report_key_press)
         self.root.bind("<KeyRelease>", self.kt_report_key_release)
 
