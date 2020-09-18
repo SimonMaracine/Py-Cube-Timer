@@ -30,7 +30,6 @@ def dump_data(file_name: str, solve: Solve = None, name: str = None, best_time: 
     with open(join(SESSIONS_PATH, file_name), "r+") as file:
         contents = json.load(file)
 
-        file.flush()
         file.seek(0)
 
         if solve is not None:
