@@ -9,23 +9,23 @@ EMPTY_SESSION = {
     "best_time": 0.0,
     "best_ao5": 0.0,
     "best_ao12": 0.0,
-    "times": []
+    "solves": []
 }
 
 
 @dataclasses.dataclass
-class Time:
+class Solve:
     time: float
     scramble: str
     date: str
 
 
 def create_new_session(name: str):
-    with open(join(SESSIONS_PATH, name), "r+") as file:
+    with open(join(SESSIONS_PATH, name), "w") as file:
         json.dump(EMPTY_SESSION, file, indent=2)
 
 
-def dump_data(file_name: str, time: Time = None, name: str = None, best_time: float = None, best_ao5: float = None,
+def dump_data(file_name: str, solve: Solve = None, name: str = None, best_time: float = None, best_ao5: float = None,
               best_ao12: float = None):
     with open(join(SESSIONS_PATH, file_name), "r+") as file:
         contents = json.load(file)
@@ -33,8 +33,8 @@ def dump_data(file_name: str, time: Time = None, name: str = None, best_time: fl
         file.flush()
         file.seek(0)
 
-        if time is not None:
-            contents["times"].append(time.__dict__)
+        if solve is not None:
+            contents["solves"].append(solve.__dict__)
         if name is not None:
             contents["name"] = name
         if best_time is not None:
@@ -47,5 +47,5 @@ def dump_data(file_name: str, time: Time = None, name: str = None, best_time: fl
         json.dump(contents, file, indent=2)
 
 
-# create_new_session("test")
-dump_data("test.json", Time(12.76, "a long WCA scramble", "17.09.2020"))
+# create_new_session("test.json")
+dump_data("test.json", Solve(12.76, "a long WCA scramble", "17.09.2020"))
