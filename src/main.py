@@ -1,12 +1,14 @@
 import logging
 import time
 import threading
+import datetime
 import tkinter as tk
 
 import src.globals
 from src.timer import Timer
 from src.scramble import generate_scramble
-from src.session import create_new_session, dump_data
+from src.session import create_new_session, dump_data, SessionData, Solve, remember_last_session, \
+    get_last_session, load_session_data
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -24,6 +26,7 @@ class MainApplication(tk.Frame):
 
         self.root.option_add("*tearOff", False)
         self.root.title("Py-Cube-Timer")
+        self.root.wm_protocol("WM_DELETE_WINDOW", self.exit)
 
         # Main menu
         men_file = tk.Menu(self)
@@ -155,6 +158,9 @@ class MainApplication(tk.Frame):
         self.last_press_time = 0
         self.last_release_time = 0
 
+        # Load session
+        self.session_data = self.load_last_session()
+
     def on_frame_configure(self, canvas):
         canvas.configure(scrollregion=canvas.bbox("all"))
 
@@ -178,10 +184,61 @@ class MainApplication(tk.Frame):
                 self.stopped_timer = False
 
     def save_solve_in_session(self):
-        self.var_scramble.set(generate_scramble())
-
-        tk.Label(self.frm_canvas_frame, text=f"{self.solve_index}. {self.var_time.get()}").grid(row=self.solve_index, column=0)
+        # Update left GUI list
+        tk.Label(self.frm_canvas_frame, text=f"{self.solve_index}. {self.var_time.get()}") \
+            .grid(row=self.solve_index, column=0, sticky="W")
         self.solve_index += 1
+
+        # Update list
+        self.session_data.solves.append(float(self.var_time.get()))
+
+        # Update current time
+        self.var_current_time.set(self.session_data.solves[-1])
+
+        # Update mean
+        mean = sum(self.session_data.solves) / len(self.session_data.solves)
+        self.var_session_mean.set("{:.2f}".format(mean))
+        logging.debug(f"Mean is {mean}")
+
+        # Update current ao5
+        ao5_list = self.session_data.solves[-5:]
+        ao5 = sum(ao5_list) / len(ao5_list)
+        if len(ao5_list) >= 5:
+            self.var_current_ao5.set("{:.2f}".format(ao5))
+            logging.debug(f"ao5 is {ao5}")
+
+        # Update current ao12
+        ao12_list = self.session_data.solves[-12:]
+        ao12 = sum(ao12_list) / len(ao12_list)
+        if len(ao12_list) >= 12:
+            self.var_current_ao12.set("{:.2f}".format(ao12))
+            logging.debug(f"ao12 is {ao12}")
+
+        # Update best time, best ao5 and best ao12
+        self.session_data.best_time = min(self.session_data.best_time, self.session_data.solves[-1])
+        self.var_best_time.set("{:.2f}".format(self.session_data.best_time))
+
+        if len(ao5_list) >= 5:
+            self.session_data.best_ao5 = min(self.session_data.best_ao5, ao5)
+            self.var_best_ao5.set("{:.2f}".format(self.session_data.best_ao5))
+
+        if len(ao12_list) >= 12:
+            self.session_data.best_ao12 = min(self.session_data.best_ao12, ao12)
+            self.var_best_ao12.set("{:.2f}".format(self.session_data.best_ao12))
+
+        assert self.session_data.name
+        try:
+            dump_data(self.session_data.name + ".json",
+                      solve=Solve(self.session_data.solves[-1], self.var_scramble.get(), str(datetime.datetime.now())),
+                      mean="{:.2f}".format(mean),
+                      best_time="{:.2f}".format(self.session_data.best_time),
+                      best_ao5="{:.2f}".format(self.session_data.best_ao5),
+                      best_ao12="{:.2f}".format(self.session_data.best_ao12))
+        except FileNotFoundError as err:
+            logging.error(err)
+
+        # Generate new scramble
+        self.var_scramble.set(generate_scramble())
 
     def check_to_save_in_session(self):
         if src.globals.can_save_solve_now:
@@ -189,7 +246,62 @@ class MainApplication(tk.Frame):
             logging.info("Saved solve")
             src.globals.can_save_solve_now = False
 
-        self.after(800, self.check_to_save_in_session)
+        self.after(700, self.check_to_save_in_session)
+
+    def exit(self):
+        remember_last_session(self.session_data.name)
+        logging.debug(f"Session remembered is {self.session_data.name}")
+        self.root.destroy()
+
+    def load_last_session(self) -> SessionData:
+        last_session_name = get_last_session()
+        session_data = load_session_data(last_session_name + ".json")
+
+        # Fill session name
+        self.var_session_name.set(session_data.name)
+
+        # Fill left GUI list
+        for i in range(len(session_data.solves)):
+            tk.Label(self.frm_canvas_frame, text=f"{i}. {session_data.solves[i]}") \
+                .grid(row=i, column=0, sticky="W")
+            self.solve_index += 1
+
+        # Fill statistics
+        # Update current time
+        self.var_current_time.set(session_data.solves[-1])
+
+        # Update mean
+        mean = sum(session_data.solves) / len(session_data.solves)
+        self.var_session_mean.set("{:.2f}".format(mean))
+        logging.debug(f"Mean is {mean}")
+
+        # Update current ao5
+        ao5_list = session_data.solves[-5:]
+        ao5 = sum(ao5_list) / len(ao5_list)
+        if len(ao5_list) >= 5:
+            self.var_current_ao5.set("{:.2f}".format(ao5))
+            logging.debug(f"ao5 is {ao5}")
+
+        # Update current ao12
+        ao12_list = session_data.solves[-12:]
+        ao12 = sum(ao12_list) / len(ao12_list)
+        if len(ao12_list) >= 12:
+            self.var_current_ao12.set("{:.2f}".format(ao12))
+            logging.debug(f"ao12 is {ao12}")
+
+        # Update best time, best ao5 and best ao12
+        session_data.best_time = min(session_data.best_time, session_data.solves[-1])
+        self.var_best_time.set("{:.2f}".format(session_data.best_time))
+
+        if len(ao5_list) >= 5:
+            session_data.best_ao5 = min(session_data.best_ao5, ao5)
+            self.var_best_ao5.set("{:.2f}".format(session_data.best_ao5))
+
+        if len(ao12_list) >= 12:
+            session_data.best_ao12 = min(session_data.best_ao12, ao12)
+            self.var_best_ao12.set("{:.2f}".format(session_data.best_ao12))
+
+        return session_data
 
     # Code copied from the internet and modified
     def kt_is_pressed(self):
