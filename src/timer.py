@@ -3,6 +3,8 @@ import logging
 import tkinter as tk
 from timeit import default_timer
 
+import src.globals
+
 
 class Timer:
 
@@ -70,6 +72,8 @@ class Timer:
             self._variable.set("{:.1f}".format(self._shallow_time / 10))
 
         stop_time = default_timer()
-        actual_time = "{:.2f}".format(stop_time - start_time)
+        actual_time = "{:.2f}".format(stop_time - start_time)  # TODO format the time correctly
         self._variable.set(actual_time)
-        logging.debug(actual_time)
+        src.globals.can_save_solve_now = True
+
+        logging.debug(f"Actual time: {actual_time}")

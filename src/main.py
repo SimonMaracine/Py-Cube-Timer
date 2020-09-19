@@ -3,8 +3,10 @@ import time
 import threading
 import tkinter as tk
 
+import src.globals
 from src.timer import Timer
 from src.scramble import generate_scramble
+from src.session import create_new_session, dump_data
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -124,17 +126,21 @@ class MainApplication(tk.Frame):
 
         bar_times.configure(command=canvas_times.yview)
 
-        frm_canvas_frame = tk.Frame(frm_times)
-        canvas_times.create_window((0, 0), window=frm_canvas_frame, anchor="nw")
-        frm_canvas_frame.bind("<Configure>", lambda event: self.on_frame_configure(canvas_times))
+        self.frm_canvas_frame = tk.Frame(frm_times)
+        canvas_times.create_window((0, 0), window=self.frm_canvas_frame, anchor="nw")
+        self.frm_canvas_frame.bind("<Configure>", lambda event: self.on_frame_configure(canvas_times))
 
-        for i in range(25):
-            tk.Label(frm_canvas_frame, text=f"{i}. 0.00").grid(row=i, column=0)
+        # for i in range(25):
+        #     tk.Label(frm_canvas_frame, text=f"{i}. 0.00").grid(row=i, column=0)
+
+        self.solve_index = 0
 
         # Timer area
         self.var_time = tk.StringVar(frm_timer, value="0.00")
         lbl_time = tk.Label(frm_timer, textvariable=self.var_time, font="Times, 90")
         lbl_time.pack()
+
+        self.check_to_save_in_session()
 
         self.timer = Timer(self.var_time)
         self.timer.with_inspection = True
@@ -157,7 +163,7 @@ class MainApplication(tk.Frame):
         if self.timer.is_running() and not self.timer.is_inspecting():
             self.timer.stop()
             self.stopped_timer = True
-            self.save_time_in_session()
+
             logging.debug("Timer STOP")
 
     def on_key_release(self, event):
@@ -166,12 +172,24 @@ class MainApplication(tk.Frame):
             if not self.stopped_timer:
                 if not self.timer.is_running() or self.timer.is_inspecting():
                     self.timer.start()
+
                     logging.debug("Timer START")
             else:
                 self.stopped_timer = False
 
-    def save_time_in_session(self):
+    def save_solve_in_session(self):
         self.var_scramble.set(generate_scramble())
+
+        tk.Label(self.frm_canvas_frame, text=f"{self.solve_index}. {self.var_time.get()}").grid(row=self.solve_index, column=0)
+        self.solve_index += 1
+
+    def check_to_save_in_session(self):
+        if src.globals.can_save_solve_now:
+            self.save_solve_in_session()
+            logging.info("Saved solve")
+            src.globals.can_save_solve_now = False
+
+        self.after(800, self.check_to_save_in_session)
 
     # Code copied from the internet and modified
     def kt_is_pressed(self):
