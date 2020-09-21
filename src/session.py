@@ -1,6 +1,6 @@
 import json
 import dataclasses
-from os.path import join
+from os.path import join, isfile
 from typing import List
 from math import inf
 
@@ -28,11 +28,11 @@ class Solve:
 @dataclasses.dataclass
 class SessionData:
     name: str
-    # mean: float
-    solves: List[float]
+    mean: float
     best_time: float
     best_ao5: float
     best_ao12: float
+    solves: List[float]  # Solve times can contain only one decimal
 
 
 def create_new_session(file_name: str):
@@ -84,23 +84,28 @@ def get_last_session() -> str:
             contents = json.load(file)
             assert contents["last_session"]
             return contents["last_session"]
-    except (json.decoder.JSONDecodeError, OSError):
+    except FileNotFoundError:
         _recreate_data_file()
-        # return
-
-    # TODO handle case when there is no last session
+        raise
+    except json.decoder.JSONDecodeError:
+        raise
+    except AssertionError:
+        raise  # TODO handle case when there is no last session
 
 
 def load_session_data(file_name: str) -> SessionData:
     with open(join(_SESSIONS_PATH, file_name), "r") as file:
         contents = json.load(file)
 
-    # mean = float(contents["mean"])
+    mean = float(contents["mean"])
     best_time = float(contents["best_time"])
     best_ao5 = float(contents["best_ao5"])
     best_ao12 = float(contents["best_ao12"])
-    solves = [solve["time"] for solve in contents["solves"]]
-    print(solves)
+    solves = [solve["time"] for solve in contents["solves"]]  # Solve times can contain only one decimal
 
-    return SessionData(contents["name"], solves, best_time,
-                       best_ao5, best_ao12)
+    return SessionData(contents["name"], mean, best_time,
+                       best_ao5, best_ao12, solves)
+
+
+def session_exists(session_name: str) -> bool:
+    return isfile(join(_SESSIONS_PATH, session_name + ".json"))
