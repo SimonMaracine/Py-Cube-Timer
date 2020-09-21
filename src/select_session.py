@@ -15,8 +15,13 @@ class SelectSession(tk.Frame):
 
         self.top_level.title("New Session" if self.new else "Open Session")
 
-        self.ent_session_name = tk.Entry(self)
-        self.ent_session_name.grid(row=0, column=0, columnspan=2, pady=16)
+        frm_entry = tk.Frame(self)
+        frm_entry.grid(row=0, column=0, columnspan=2, pady=16)
+
+        tk.Label(frm_entry, text="Name").grid(row=0, column=0, padx=(0, 4))
+
+        self.ent_session_name = tk.Entry(frm_entry, width=18)
+        self.ent_session_name.grid(row=0, column=1)
 
         tk.Button(self, text="Ok", command=self.ok).grid(row=1, column=0)
         tk.Button(self, text="Cancel", command=self.top_level.destroy).grid(row=1, column=1)
