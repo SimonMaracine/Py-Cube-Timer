@@ -36,7 +36,7 @@ class MainApplication(tk.Frame):
 
         # Main menu
         men_file = tk.Menu(self)
-        men_file.add_command(label="New Session")
+        men_file.add_command(label="New Session", command=self.new_session)
         men_file.add_command(label="Open Session", command=self.open_session)
         men_file.add_command(label="Exit", command=self.exit)
 
@@ -71,7 +71,7 @@ class MainApplication(tk.Frame):
 
         # Left side area
         # Session name
-        self.var_session_name = tk.StringVar(frm_left_side, value="Session name")
+        self.var_session_name = tk.StringVar(frm_left_side, value="")
         lbl_session_name = tk.Label(frm_left_side, textvariable=self.var_session_name)
         lbl_session_name.grid(row=0, column=0)
 
@@ -227,26 +227,24 @@ class MainApplication(tk.Frame):
 
     def exit(self):
         remember_last_session(self.session_data.name)
-        logging.debug(f"Session remembered is {self.session_data.name}")
+        logging.debug(f"Session remembered is '{self.session_data.name}'")
         self.root.destroy()
 
     def update_statistics(self, session_data: SessionData):
-        # Update current time
+        # Update mean
+        session_data.mean = sum(session_data.solves) / len(session_data.solves)
+        self.var_session_mean.set(TWODEC(session_data.mean))
+        logging.debug(f"Mean is {session_data.mean}")
+
+        # Update current time, current ao5 and current a012
         self.var_current_time.set(TWODEC(session_data.solves[-1]))
 
-        # Update mean
-        mean = sum(session_data.solves) / len(session_data.solves)
-        self.var_session_mean.set(TWODEC(mean))
-        logging.debug(f"Mean is {mean}")
-
-        # Update current ao5
         ao5_list = session_data.solves[-5:]
         ao5 = sum(ao5_list) / len(ao5_list)
         if len(ao5_list) >= 5:
             self.var_current_ao5.set(TWODEC(ao5))
             logging.debug(f"ao5 is {ao5}")
 
-        # Update current ao12
         ao12_list = session_data.solves[-12:]
         ao12 = sum(ao12_list) / len(ao12_list)
         if len(ao12_list) >= 12:
@@ -270,14 +268,35 @@ class MainApplication(tk.Frame):
         self.load_session(last_session_name)
 
     def new_session(self):
-        pass
+        top_level = tk.Toplevel(self.root)
+        SelectSession(top_level, self.create_session, True)
 
     def open_session(self):
         top_level = tk.Toplevel(self.root)
         SelectSession(top_level, self.load_session, False)
 
-    def make_session(self):
-        pass
+    def create_session(self, name: str):
+        self.session_data = create_new_session(name)
+
+        # Fill session name
+        self.var_session_name.set(name)
+
+        # Clear first
+        # Only these must be reset
+        for label in self.frm_canvas_frame.winfo_children():
+            label.destroy()
+
+        self.var_current_time.set("0.00")
+        self.var_current_ao5.set("0.00")
+        self.var_current_ao12.set("0.00")
+        self.var_best_time.set("0.00")
+        self.var_best_ao5.set("0.00")
+        self.var_best_ao12.set("0.00")
+        self.var_session_mean.set("0.00")
+
+        self.solve_index = 0
+
+        # TODO maybe clear timer too
 
     def load_session(self, name: str):
         session_data = load_session_data(name + ".json")
@@ -285,17 +304,22 @@ class MainApplication(tk.Frame):
         # Fill session name
         self.var_session_name.set(session_data.name)
 
-        # Clean up first
+        # Clear first
         # Only these must be reset
         for label in self.frm_canvas_frame.winfo_children():
             label.destroy()
 
+        self.var_current_time.set("0.00")
         self.var_current_ao5.set("0.00")
         self.var_current_ao12.set("0.00")
+        self.var_best_time.set("0.00")
         self.var_best_ao5.set("0.00")
         self.var_best_ao12.set("0.00")
+        self.var_session_mean.set("0.00")
 
-        # TODO reset solve index?
+        self.solve_index = 0
+
+        # TODO maybe clear timer too
 
         # Fill left GUI list
         for i in range(len(session_data.solves)):
@@ -304,7 +328,8 @@ class MainApplication(tk.Frame):
             self.solve_index += 1
 
         # Fill statistics
-        self.update_statistics(session_data)
+        if session_data.solves:
+            self.update_statistics(session_data)
 
         self.session_data = session_data
 

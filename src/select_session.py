@@ -10,9 +10,10 @@ class SelectSession(tk.Frame):
         super().__init__(top_level)
         self.top_level = top_level
         self.on_ok = on_ok
+        self.new = new
         self.pack(padx=10, pady=10, expand=True)
 
-        self.top_level.title("New Session" if new else "Open Session")
+        self.top_level.title("New Session" if self.new else "Open Session")
 
         self.ent_session_name = tk.Entry(self)
         self.ent_session_name.grid(row=0, column=0, columnspan=2, pady=16)
@@ -30,8 +31,9 @@ class SelectSession(tk.Frame):
         if not session_name:
             return
 
-        if not session_exists(session_name):
-            return
+        if not self.new:  # Only check for existence, if it's opening mode
+            if not session_exists(session_name):
+                return
 
         self.on_ok(session_name)
         self.top_level.destroy()

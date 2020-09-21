@@ -7,10 +7,10 @@ from math import inf
 _SESSIONS_PATH = join("data", "sessions")
 _EMPTY_SESSION = {
     "name": "",
-    "mean": inf,
-    "best_time": inf,
-    "best_ao5": inf,
-    "best_ao12": inf,
+    "mean": "inf",
+    "best_time": "inf",
+    "best_ao5": "inf",
+    "best_ao12": "inf",
     "solves": []
 }
 _EMPTY_DATA_FILE = {
@@ -32,16 +32,20 @@ class SessionData:
     best_time: float
     best_ao5: float
     best_ao12: float
-    solves: List[float]  # Solve times can contain only one decimal
+    solves: List[float]  # Solve times can sometimes contain only one decimal
 
 
-def create_new_session(file_name: str):
-    with open(join(_SESSIONS_PATH, file_name), "w") as file:
-        json.dump(_EMPTY_SESSION, file, indent=2)
+def create_new_session(name: str) -> SessionData:
+    with open(join(_SESSIONS_PATH, name + ".json"), "w") as file:
+        data = _EMPTY_SESSION
+        data["name"] = name
+        json.dump(data, file, indent=2)
+
+    return SessionData(name, inf, inf, inf, inf, [])
 
 
-def dump_data(file_name: str, solve: Solve = None, mean: str = None, name: str = None, best_time: str = None,
-              best_ao5: str = None, best_ao12: str = None):
+def dump_data(file_name: str, solve: Solve = None, mean: str = None, best_time: str = None, best_ao5: str = None,
+              best_ao12: str = None):
     with open(join(_SESSIONS_PATH, file_name), "r+") as file:
         contents = json.load(file)
 
@@ -51,8 +55,6 @@ def dump_data(file_name: str, solve: Solve = None, mean: str = None, name: str =
             contents["solves"].append(solve.__dict__)
         if mean is not None:
             contents["mean"] = mean
-        if name is not None:
-            contents["name"] = name
         if best_time is not None:
             contents["best_time"] = best_time
         if best_ao5 is not None:
@@ -61,6 +63,9 @@ def dump_data(file_name: str, solve: Solve = None, mean: str = None, name: str =
             contents["best_ao12"] = best_ao12
 
         json.dump(contents, file, indent=2)
+
+
+# TODO make method to copy a session and rename it
 
 
 def _recreate_data_file():
@@ -101,11 +106,13 @@ def load_session_data(file_name: str) -> SessionData:
     best_time = float(contents["best_time"])
     best_ao5 = float(contents["best_ao5"])
     best_ao12 = float(contents["best_ao12"])
-    solves = [solve["time"] for solve in contents["solves"]]  # Solve times can contain only one decimal
+    solves = [solve["time"] for solve in contents["solves"]]  # Solve times can sometimes contain only one decimal
+
+    assert contents["name"]
 
     return SessionData(contents["name"], mean, best_time,
                        best_ao5, best_ao12, solves)
 
 
-def session_exists(session_name: str) -> bool:
-    return isfile(join(_SESSIONS_PATH, session_name + ".json"))
+def session_exists(name: str) -> bool:
+    return isfile(join(_SESSIONS_PATH, name + ".json"))
