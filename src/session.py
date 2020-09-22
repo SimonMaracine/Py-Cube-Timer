@@ -47,8 +47,28 @@ def create_new_session(name: str) -> SessionData:
     return SessionData(name, inf, inf, inf, inf, [])
 
 
-def dump_data(file_name: str, solve: Solve = None, mean: str = None, best_time: str = None, best_ao5: str = None,
-              best_ao12: str = None):
+def dump_data(file_name: str, mean: str, best_time: str, best_ao5: str, best_ao12: str, solve: Solve = None):
+    with open(join(_SESSIONS_PATH, file_name), "r+") as file:
+        try:
+            contents = json.load(file)
+        except json.decoder.JSONDecodeError:
+            logging.error(f'File "{file_name}" is corrupted')
+            raise ValueError  # Let the caller handle this error
+
+        file.seek(0)
+
+        if solve is not None:
+            contents["solves"].append(solve.__dict__)
+        contents["mean"] = mean
+        contents["best_time"] = best_time
+        contents["best_ao5"] = best_ao5
+        contents["best_ao12"] = best_ao12
+
+        json.dump(contents, file, indent=2)
+        file.truncate()
+
+
+def remove_solve_out_of_session(file_name: str):
     with open(join(_SESSIONS_PATH, file_name), "r+") as file:
         try:
             contents = json.load(file)
@@ -58,31 +78,26 @@ def dump_data(file_name: str, solve: Solve = None, mean: str = None, best_time: 
 
         file.seek(0)
 
-        if solve is not None:
-            contents["solves"].append(solve.__dict__)
-        if mean is not None:
-            contents["mean"] = mean
-        if best_time is not None:
-            contents["best_time"] = best_time
-        if best_ao5 is not None:
-            contents["best_ao5"] = best_ao5
-        if best_ao12 is not None:
-            contents["best_ao12"] = best_ao12
+        logging.debug(f"Removing solve {contents['solves'][-1]}")
+        del contents['solves'][-1]
 
         json.dump(contents, file, indent=2)
+        file.truncate()  # Don't forget this!
 
 
 # TODO make method to copy a session and rename it
 
 
-def remember_last_session(name: str):  # FIXME data file occasionally gets somehow corrupted
+def remember_last_session(name: str):
     with open(join("data", "data.json"), "r+") as file:
         contents = json.load(file)
 
         file.seek(0)
 
         contents["last_session"] = name
+
         json.dump(contents, file, indent=2)
+        file.truncate()
 
 
 def get_last_session() -> str:

@@ -5,12 +5,13 @@ import datetime
 import tkinter as tk
 from tkinter import messagebox
 from typing import Optional
+from math import inf
 
 import src.globals
 from src.timer import Timer
 from src.scramble import generate_scramble
 from src.session import create_new_session, dump_data, SessionData, Solve, remember_last_session, \
-    get_last_session, load_session_data, data_folder_exists, recreate_data_folder
+    get_last_session, load_session_data, data_folder_exists, recreate_data_folder, remove_solve_out_of_session
 from src.select_session import SelectSession
 
 logging.basicConfig(level=logging.DEBUG)
@@ -157,6 +158,7 @@ class MainApplication(tk.Frame):
         self.timer.with_inspection = True
         self.root.bind("<KeyPress>", self.kt_report_key_press)
         self.root.bind("<KeyRelease>", self.kt_report_key_release)
+        self.root.bind("<Alt-z>", self.on_alt_z_key_press)
 
         # Flag to handle timer start
         self.stopped_timer = False
@@ -204,6 +206,9 @@ class MainApplication(tk.Frame):
             else:
                 self.stopped_timer = False
 
+    def on_alt_z_key_press(self, event):
+        self.remove_last_solve_out_of_session()
+
     def save_solve_in_session(self, solve_time: str):
         assert self.session_data is not None
 
@@ -237,6 +242,62 @@ class MainApplication(tk.Frame):
         # Generate new scramble
         self.var_scramble.set(generate_scramble())
 
+    def remove_last_solve_out_of_session(self):
+        assert self.session_data is not None
+
+        if not self.session_data.solves:
+            messagebox.showinfo("No Solves", "There are no solves in this session.", parent=self.root)
+            return
+
+        if not messagebox.askyesno("Remove Last Solve", "Are you sure you want to remove the last solve in the session?",
+                                   parent=self.root):
+            return
+
+        # Update left GUI list
+        labels = self.frm_canvas_frame.winfo_children()
+        labels[-1].destroy()
+        self.solve_index -= 1
+
+        # Update list
+        del self.session_data.solves[-1]
+
+        if self.session_data.solves:
+            self.update_statistics(self.session_data)
+
+        # Update these which don't always show
+        if len(self.session_data.solves) < 5:
+            self.session_data.best_ao5 = inf
+            self.var_current_ao5.set("0.00")
+            self.var_best_ao5.set("0.00")
+        elif len(self.session_data.solves) < 12:
+            self.session_data.best_ao12 = inf
+            self.var_current_ao12.set("0.00")
+            self.var_best_ao12.set("0.00")
+
+        if not self.session_data.solves:
+            self.var_current_time.set("0.00")
+            self.session_data.best_time = inf
+            self.var_best_time.set("0.00")
+            self.session_data.mean = inf
+            self.var_session_mean.set("0.00")
+
+        assert self.session_data.name
+        try:
+            remove_solve_out_of_session(self.session_data.name + ".json")
+            dump_data(self.session_data.name + ".json",
+                      mean=TWODEC(self.session_data.mean),
+                      best_time=TWODEC(self.session_data.best_time),
+                      best_ao5=TWODEC(self.session_data.best_ao5),
+                      best_ao12=TWODEC(self.session_data.best_ao12))
+        except FileNotFoundError:
+            logging.error("Could not remove the solve in session, because the file is missing")
+            messagebox.showerror("Saving Failure", "Could not remove the solve in session, because the file is missing.",
+                                 parent=self.root)
+        except ValueError:
+            logging.error("Could not remove the solve, because the file is corrupted")
+            messagebox.showerror("Saving Failure", "Could not remove the solve, because the file is corrupted.",
+                                 parent=self.root)
+
     def check_to_save_in_session(self):
         if src.globals.can_save_solve_now:
             self.save_solve_in_session(self.var_time.get())
@@ -264,27 +325,37 @@ class MainApplication(tk.Frame):
         self.var_current_time.set(TWODEC(session_data.solves[-1]))
 
         ao5_list = session_data.solves[-5:]
-        ao5 = sum(ao5_list) / len(ao5_list)
         if len(ao5_list) >= 5:
+            ao5 = sum(ao5_list) / 5
             self.var_current_ao5.set(TWODEC(ao5))
             logging.debug(f"ao5 is {ao5}")
 
         ao12_list = session_data.solves[-12:]
-        ao12 = sum(ao12_list) / len(ao12_list)
         if len(ao12_list) >= 12:
+            ao12 = sum(ao12_list) / 12
             self.var_current_ao12.set(TWODEC(ao12))
             logging.debug(f"ao12 is {ao12}")
 
         # Update best time, best ao5 and best ao12
-        session_data.best_time = min(session_data.best_time, session_data.solves[-1])
+        session_data.best_time = min(session_data.solves)
         self.var_best_time.set(TWODEC(session_data.best_time))
 
         if len(ao5_list) >= 5:
-            session_data.best_ao5 = min(session_data.best_ao5, ao5)
+            averages = []
+            for i in range(len(session_data.solves) - 4):
+                five = session_data.solves[0 + i:5 + i]
+                averages.append(sum(five) / 5)
+
+            session_data.best_ao5 = min(averages)
             self.var_best_ao5.set(TWODEC(session_data.best_ao5))
 
         if len(ao12_list) >= 12:
-            session_data.best_ao12 = min(session_data.best_ao12, ao12)
+            averages = []
+            for i in range(len(session_data.solves) - 11):
+                twelve = session_data.solves[0 + i:12 + i]
+                averages.append(sum(twelve) / 12)
+
+            session_data.best_ao12 = min(averages)
             self.var_best_ao12.set(TWODEC(session_data.best_ao12))
 
     def load_last_session(self):
