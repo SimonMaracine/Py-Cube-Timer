@@ -281,6 +281,14 @@ class MainApplication(tk.Frame):
             logging.info("Please select a session")
             messagebox.showinfo("No Session", "Please select or create a new session to use.", parent=self.root)
             return
+        except ValueError:
+            messagebox.showerror("Data Error", "The data file was corrupted.", parent=self.root)
+            messagebox.showinfo("No Session", "Please select or create a new session to use.", parent=self.root)
+            return
+        except FileNotFoundError:
+            messagebox.showerror("Data Error", "The data file was missing.", parent=self.root)
+            messagebox.showinfo("No Session", "Please select or create a new session to use.", parent=self.root)
+            return
 
         self.load_session(last_session_name)
 

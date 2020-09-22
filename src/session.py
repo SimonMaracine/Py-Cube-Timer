@@ -91,14 +91,18 @@ def get_last_session() -> str:
             contents = json.load(file)
             assert contents["last_session"]
             return contents["last_session"]
+    # Let the caller handle these errors
     except FileNotFoundError:
         _recreate_data_file()
+        logging.error("Data file was missing")
         raise
     except json.decoder.JSONDecodeError:
-        raise  # TODO should recreate data file here too
+        _recreate_data_file()
+        logging.error("Data file was somehow corrupted")
+        raise ValueError
     except AssertionError:
         logging.info("There is no last session")
-        raise  # Let the caller handle the error
+        raise
 
 
 def load_session_data(file_name: str) -> Optional[SessionData]:
