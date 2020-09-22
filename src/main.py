@@ -3,6 +3,7 @@ import time
 import threading
 import datetime
 import tkinter as tk
+from tkinter import messagebox
 from typing import Optional
 
 import src.globals
@@ -182,6 +183,10 @@ class MainApplication(tk.Frame):
 
     def on_key_release(self, event):
         print("KEY RELEASED")
+        if self.session_data is None:
+            messagebox.showerror("No Session", "Please select or create a new session to use the timer.", parent=self.root)
+            return
+
         if event.char == " ":
             if not self.stopped_timer:
                 if not self.timer.is_running() or self.timer.is_inspecting():
@@ -192,6 +197,8 @@ class MainApplication(tk.Frame):
                 self.stopped_timer = False
 
     def save_solve_in_session(self, solve_time: str):
+        assert self.session_data is not None
+
         # Update left GUI list
         tk.Label(self.frm_canvas_frame, text=f"{self.solve_index}. {solve_time}") \
             .grid(row=self.solve_index, column=0, sticky="W")
@@ -226,6 +233,10 @@ class MainApplication(tk.Frame):
         self.after(700, self.check_to_save_in_session)
 
     def exit(self):
+        if self.session_data is None:
+            self.root.destroy()
+            return
+
         remember_last_session(self.session_data.name)
         logging.debug(f"Session remembered is '{self.session_data.name}'")
         self.root.destroy()
@@ -264,7 +275,13 @@ class MainApplication(tk.Frame):
             self.var_best_ao12.set(TWODEC(session_data.best_ao12))
 
     def load_last_session(self):
-        last_session_name = get_last_session()
+        try:
+            last_session_name = get_last_session()
+        except AssertionError:  # There was no last session
+            logging.info("Please select a session")
+            messagebox.showinfo("No Session", "Please select or create a new session to use.", parent=self.root)
+            return
+
         self.load_session(last_session_name)
 
     def new_session(self):
@@ -300,6 +317,11 @@ class MainApplication(tk.Frame):
 
     def load_session(self, name: str):
         session_data = load_session_data(name + ".json")
+        if session_data is None:
+            messagebox.showerror("Loading Failure",
+                                 (f'Could not load session "{name}", because either it has missing data, or '
+                                  "it is non-existent, or it is corrupted."), parent=self.root)
+            return
 
         # Fill session name
         self.var_session_name.set(session_data.name)
@@ -318,6 +340,7 @@ class MainApplication(tk.Frame):
         self.var_session_mean.set("0.00")
 
         self.solve_index = 0
+        # Yeah, not very DRY...
 
         # TODO maybe clear timer too
 

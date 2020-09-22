@@ -1,7 +1,9 @@
 import json
 import dataclasses
+import logging
+import copy
 from os.path import join, isfile
-from typing import List
+from typing import List, Optional
 from math import inf
 
 _SESSIONS_PATH = join("data", "sessions")
@@ -37,7 +39,7 @@ class SessionData:
 
 def create_new_session(name: str) -> SessionData:
     with open(join(_SESSIONS_PATH, name + ".json"), "w") as file:
-        data = _EMPTY_SESSION
+        data = copy.copy(_EMPTY_SESSION)
         data["name"] = name
         json.dump(data, file, indent=2)
 
@@ -93,25 +95,37 @@ def get_last_session() -> str:
         _recreate_data_file()
         raise
     except json.decoder.JSONDecodeError:
-        raise
+        raise  # TODO should recreate data file here too
     except AssertionError:
-        raise  # TODO handle case when there is no last session
+        logging.info("There is no last session")
+        raise  # Let the caller handle the error
 
 
-def load_session_data(file_name: str) -> SessionData:
-    with open(join(_SESSIONS_PATH, file_name), "r") as file:
-        contents = json.load(file)
+def load_session_data(file_name: str) -> Optional[SessionData]:
+    try:
+        with open(join(_SESSIONS_PATH, file_name), "r") as file:
+            contents = json.load(file)
+    except FileNotFoundError as err:
+        logging.error(err)
+        return None
+    except json.decoder.JSONDecodeError as err:
+        logging.error(err)
+        return None
 
-    mean = float(contents["mean"])
-    best_time = float(contents["best_time"])
-    best_ao5 = float(contents["best_ao5"])
-    best_ao12 = float(contents["best_ao12"])
-    solves = [solve["time"] for solve in contents["solves"]]  # Solve times can sometimes contain only one decimal
+    try:
+        name = contents["name"]
+        mean = float(contents["mean"])
+        best_time = float(contents["best_time"])
+        best_ao5 = float(contents["best_ao5"])
+        best_ao12 = float(contents["best_ao12"])
+        solves = [solve["time"] for solve in contents["solves"]]  # Solve times can sometimes contain only one decimal
 
-    assert contents["name"]
-
-    return SessionData(contents["name"], mean, best_time,
-                       best_ao5, best_ao12, solves)
+        assert name
+    except KeyError as err:  # Missing contents
+        logging.error(f"Missing entry: {err}")
+        return None
+    else:
+        return SessionData(name, mean, best_time, best_ao5, best_ao12, solves)
 
 
 def session_exists(name: str) -> bool:

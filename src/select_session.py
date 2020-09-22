@@ -1,5 +1,6 @@
 import tkinter as tk
 from typing import Callable
+from tkinter import messagebox
 
 from src.session import session_exists
 
@@ -32,12 +33,13 @@ class SelectSession(tk.Frame):
     def ok(self):
         session_name = self.ent_session_name.get()
 
-        # TODO show a message here
         if not session_name:
+            messagebox.showerror("Invalid Name", "Please insert a session name.", parent=self.top_level)
             return
 
         if not self.new:  # Only check for existence, if it's opening mode
             if not session_exists(session_name):
+                messagebox.showerror("Invalid Name", f'There is no session called "{session_name}".', parent=self.top_level)
                 return
 
         self.on_ok(session_name)
