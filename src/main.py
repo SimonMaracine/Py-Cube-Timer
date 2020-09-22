@@ -356,9 +356,9 @@ class MainApplication(tk.Frame):
         # Yeah, not very DRY...
 
         # Fill left GUI list
-        for i in range(len(session_data.solves)):
-            tk.Label(self.frm_canvas_frame, text=f"{i}. {TWODEC(session_data.solves[i])}") \
-                .grid(row=i, column=0, sticky="W")
+        for solve in session_data.solves:
+            tk.Label(self.frm_canvas_frame, text=f"{self.solve_index}. {TWODEC(solve)}") \
+                .grid(row=self.solve_index, column=0, sticky="W")
             self.solve_index += 1
 
         # Fill statistics

@@ -79,7 +79,7 @@ def _recreate_data_file():
         json.dump(_EMPTY_DATA_FILE, file, indent=2)
 
 
-def remember_last_session(name: str):
+def remember_last_session(name: str):  # FIXME data file occasinally gets somehow corrupted
     with open(join("data", "data.json"), "r+") as file:
         contents = json.load(file)
 
