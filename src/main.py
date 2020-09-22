@@ -10,7 +10,7 @@ import src.globals
 from src.timer import Timer
 from src.scramble import generate_scramble
 from src.session import create_new_session, dump_data, SessionData, Solve, remember_last_session, \
-    get_last_session, load_session_data
+    get_last_session, load_session_data, data_folder_exists, recreate_data_folder
 from src.select_session import SelectSession
 
 logging.basicConfig(level=logging.DEBUG)
@@ -166,8 +166,16 @@ class MainApplication(tk.Frame):
         self.last_press_time = 0
         self.last_release_time = 0
 
-        # Load session
+        # Data class to hold a session
         self.session_data: Optional[SessionData] = None
+
+        # Check for data folder
+        if not data_folder_exists():
+            logging.error("The data folder is missing")
+            messagebox.showerror("No Data folder", "The data folder is missing.", parent=self.root)
+            recreate_data_folder()
+
+        # Load session; sets session_data variable
         self.load_last_session()
 
     def on_frame_configure(self, canvas):

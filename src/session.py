@@ -2,7 +2,8 @@ import json
 import dataclasses
 import logging
 import copy
-from os.path import join, isfile
+import os
+from os.path import join, isfile, isdir
 from typing import List, Optional
 from math import inf
 
@@ -74,12 +75,7 @@ def dump_data(file_name: str, solve: Solve = None, mean: str = None, best_time: 
 # TODO make method to copy a session and rename it
 
 
-def _recreate_data_file():
-    with open(join("data", "data.json"), "w") as file:
-        json.dump(_EMPTY_DATA_FILE, file, indent=2)
-
-
-def remember_last_session(name: str):  # FIXME data file occasinally gets somehow corrupted
+def remember_last_session(name: str):  # FIXME data file occasionally gets somehow corrupted
     with open(join("data", "data.json"), "r+") as file:
         contents = json.load(file)
 
@@ -138,3 +134,17 @@ def load_session_data(file_name: str) -> Optional[SessionData]:
 
 def session_exists(name: str) -> bool:
     return isfile(join(_SESSIONS_PATH, name + ".json"))
+
+
+def data_folder_exists() -> bool:
+    return isdir("data") and isdir(_SESSIONS_PATH)
+
+
+def recreate_data_folder():
+    os.mkdir("data")
+    os.mkdir("data/sessions")
+
+
+def _recreate_data_file():
+    with open(join("data", "data.json"), "w") as file:
+        json.dump(_EMPTY_DATA_FILE, file, indent=2)
