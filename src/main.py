@@ -144,7 +144,7 @@ class MainApplication(tk.Frame):
         # for i in range(25):
         #     tk.Label(frm_canvas_frame, text=f"{i}. 0.00").grid(row=i, column=0)
 
-        self.solve_index = 0
+        self.solve_index = 1
 
         # Timer area
         self.var_time = tk.StringVar(frm_timer, value="0.00")
@@ -217,9 +217,14 @@ class MainApplication(tk.Frame):
                       best_time=TWODEC(self.session_data.best_time),
                       best_ao5=TWODEC(self.session_data.best_ao5),
                       best_ao12=TWODEC(self.session_data.best_ao12))
-        except FileNotFoundError as err:
-            logging.error(err)
-            exit(1)
+        except FileNotFoundError:
+            logging.error("Could not save the solve in session, because the file is missing")
+            messagebox.showerror("Saving Failure", "Could not save the solve in session, because the file is missing.",
+                                 parent=self.root)
+        except ValueError:
+            logging.error("Could not save the solve, because the file is corrupted")
+            messagebox.showerror("Saving Failure", "Could not save the solve, because the file is corrupted.",
+                                 parent=self.root)
 
         # Generate new scramble
         self.var_scramble.set(generate_scramble())
@@ -319,9 +324,8 @@ class MainApplication(tk.Frame):
         self.var_best_ao12.set("0.00")
         self.var_session_mean.set("0.00")
 
-        self.solve_index = 0
-
-        # TODO maybe clear timer too
+        self.solve_index = 1
+        self.var_time.set("0.00")
 
     def load_session(self, name: str):
         session_data = load_session_data(name + ".json")
@@ -347,10 +351,9 @@ class MainApplication(tk.Frame):
         self.var_best_ao12.set("0.00")
         self.var_session_mean.set("0.00")
 
-        self.solve_index = 0
+        self.solve_index = 1
+        self.var_time.set("0.00")
         # Yeah, not very DRY...
-
-        # TODO maybe clear timer too
 
         # Fill left GUI list
         for i in range(len(session_data.solves)):

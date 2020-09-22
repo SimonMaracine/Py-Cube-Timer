@@ -49,7 +49,11 @@ def create_new_session(name: str) -> SessionData:
 def dump_data(file_name: str, solve: Solve = None, mean: str = None, best_time: str = None, best_ao5: str = None,
               best_ao12: str = None):
     with open(join(_SESSIONS_PATH, file_name), "r+") as file:
-        contents = json.load(file)
+        try:
+            contents = json.load(file)
+        except json.decoder.JSONDecodeError:
+            logging.error(f"File '{file_name}' is corrupted")
+            raise ValueError  # Let the caller handle this error
 
         file.seek(0)
 
