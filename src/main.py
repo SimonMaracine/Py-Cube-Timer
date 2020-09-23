@@ -24,7 +24,7 @@ def TWODEC(n: float) -> str:
 class MainApplication(tk.Frame):
 
     def __init__(self, root: tk.Tk):
-        super().__init__(root, bg="black", relief="ridge", bd=6)
+        super().__init__(root)
         self.root = root
         self.pack(fill="both", expand=True)
         self.columnconfigure(0, weight=0)
@@ -43,11 +43,12 @@ class MainApplication(tk.Frame):
         men_file.add_command(label="Exit", command=self.exit)
 
         men_edit = tk.Menu(self)
-        men_edit.add_command(label="Settings")
+        men_edit.add_command(label="Remove Last Solve", command=self.remove_last_solve_out_of_session)
+        men_edit.add_command(label="Settings", command=None)
 
         men_help = tk.Menu(self)
-        men_help.add_command(label="Info")
-        men_help.add_command(label="About")
+        men_help.add_command(label="Info", command=None)
+        men_help.add_command(label="About", command=None)
 
         men_main = tk.Menu(self)
         men_main.add_cascade(label="File", menu=men_file)
@@ -56,73 +57,75 @@ class MainApplication(tk.Frame):
         self.root.configure(menu=men_main)
 
         # Main frames
-        frm_left_side = tk.Frame(self, bg="red", relief="ridge", bd=2)
+        frm_left_side = tk.Frame(self, relief="ridge", bd=3)
         frm_left_side.grid(row=0, column=0, rowspan=2, sticky="wns")
         frm_left_side.rowconfigure(3, weight=1)
 
-        frm_scramble = tk.Frame(self, bg="purple", relief="ridge", bd=2)
+        frm_scramble = tk.Frame(self, relief="ridge", bd=3)
         frm_scramble.grid(row=0, column=1, sticky="wen")
 
-        frm_timer = tk.Frame(self, bg="blue", relief="ridge", bd=2)
+        frm_timer = tk.Frame(self)
         frm_timer.grid(row=1, column=1)
 
         # Scramble area
         self.var_scramble = tk.StringVar(frm_scramble, value=generate_scramble())
-        lbl_scramble = tk.Label(frm_scramble, textvariable=self.var_scramble, font="Times, 20")
-        lbl_scramble.pack()
+        self.lbl_scramble = tk.Label(frm_scramble, textvariable=self.var_scramble, font="Times, 25")
+        self.lbl_scramble.pack()
+
+        frm_scramble.bind("<Configure>", self.on_window_resize)
 
         # Left side area
         # Session name
         self.var_session_name = tk.StringVar(frm_left_side, value="")
-        lbl_session_name = tk.Label(frm_left_side, textvariable=self.var_session_name)
+        lbl_session_name = tk.Label(frm_left_side, textvariable=self.var_session_name, font="Times, 13")
         lbl_session_name.grid(row=0, column=0)
 
         # Statistics
         frm_statistics = tk.Frame(frm_left_side)
         frm_statistics.grid(row=1, column=0)
 
-        lbl_current = tk.Label(frm_statistics, text="current")
+        lbl_current = tk.Label(frm_statistics, text="current", font="Times, 13")
         lbl_current.grid(row=0, column=1)
 
-        lbl_best = tk.Label(frm_statistics, text="best")
+        lbl_best = tk.Label(frm_statistics, text="best", font="Times, 13")
         lbl_best.grid(row=0, column=2)
 
-        lbl_time = tk.Label(frm_statistics, text="time")
+        lbl_time = tk.Label(frm_statistics, text="time", font="Times, 13")
         lbl_time.grid(row=1, column=0)
 
-        lbl_ao5 = tk.Label(frm_statistics, text="ao5")
+        lbl_ao5 = tk.Label(frm_statistics, text="ao5", font="Times, 13")
         lbl_ao5.grid(row=2, column=0)
 
-        lbl_ao12 = tk.Label(frm_statistics, text="ao12")
+        lbl_ao12 = tk.Label(frm_statistics, text="ao12", font="Times, 13")
         lbl_ao12.grid(row=3, column=0)
 
         self.var_current_time = tk.DoubleVar(frm_statistics, value="0.00")
-        lbl_current_time = tk.Label(frm_statistics, textvariable=self.var_current_time)
+        lbl_current_time = tk.Label(frm_statistics, textvariable=self.var_current_time, font="Times, 13")
         lbl_current_time.grid(row=1, column=1)
 
         self.var_current_ao5 = tk.DoubleVar(frm_statistics, value="0.00")
-        lbl_current_ao5 = tk.Label(frm_statistics, textvariable=self.var_current_ao5)
+        lbl_current_ao5 = tk.Label(frm_statistics, textvariable=self.var_current_ao5, font="Times, 13")
         lbl_current_ao5.grid(row=2, column=1)
 
         self.var_current_ao12 = tk.DoubleVar(frm_statistics, value="0.00")
-        lbl_current_ao12 = tk.Label(frm_statistics, textvariable=self.var_current_ao12)
+        lbl_current_ao12 = tk.Label(frm_statistics, textvariable=self.var_current_ao12, font="Times, 13")
         lbl_current_ao12.grid(row=3, column=1)
 
         self.var_best_time = tk.DoubleVar(frm_statistics, value="0.00")
-        lbl_best_time = tk.Label(frm_statistics, textvariable=self.var_best_time)
+        lbl_best_time = tk.Label(frm_statistics, textvariable=self.var_best_time, font="Times, 13")
         lbl_best_time.grid(row=1, column=2)
 
         self.var_best_ao5 = tk.DoubleVar(frm_statistics, value="0.00")
-        lbl_best_ao5 = tk.Label(frm_statistics, textvariable=self.var_best_ao5)
+        lbl_best_ao5 = tk.Label(frm_statistics, textvariable=self.var_best_ao5, font="Times, 13")
         lbl_best_ao5.grid(row=2, column=2)
 
         self.var_best_ao12 = tk.DoubleVar(frm_statistics, value="0.00")
-        lbl_best_ao12 = tk.Label(frm_statistics, textvariable=self.var_best_ao12)
+        lbl_best_ao12 = tk.Label(frm_statistics, textvariable=self.var_best_ao12, font="Times, 13")
         lbl_best_ao12.grid(row=3, column=2)
 
         # Session mean
         self.var_session_mean = tk.StringVar(frm_left_side, value="0.00")
-        lbl_session_mean = tk.Label(frm_left_side, textvariable=self.var_session_mean, font="Times, 18")
+        lbl_session_mean = tk.Label(frm_left_side, textvariable=self.var_session_mean, font="Times, 19")
 
         lbl_session_mean.grid(row=2, column=0)
 
@@ -140,16 +143,14 @@ class MainApplication(tk.Frame):
 
         self.frm_canvas_frame = tk.Frame(frm_times)
         canvas_times.create_window((0, 0), window=self.frm_canvas_frame, anchor="nw")
-        self.frm_canvas_frame.bind("<Configure>", lambda event: self.on_frame_configure(canvas_times))
-
-        # for i in range(25):
-        #     tk.Label(frm_canvas_frame, text=f"{i}. 0.00").grid(row=i, column=0)
+        self.frm_canvas_frame.bind("<Configure>", lambda event: self.frame_configure(canvas_times))
 
         self.solve_index = 1
+        self.MAX_SOLVES = 9998
 
         # Timer area
         self.var_time = tk.StringVar(frm_timer, value="0.00")
-        lbl_time = tk.Label(frm_timer, textvariable=self.var_time, font="Times, 90")
+        lbl_time = tk.Label(frm_timer, textvariable=self.var_time, font="Times, 120")
         lbl_time.pack()
 
         self.check_to_save_in_session()
@@ -180,8 +181,11 @@ class MainApplication(tk.Frame):
         # Load session; sets session_data variable
         self.load_last_session()
 
-    def on_frame_configure(self, canvas):
+    def frame_configure(self, canvas):
         canvas.configure(scrollregion=canvas.bbox("all"))
+
+    def on_window_resize(self, event):
+        self.lbl_scramble.configure(wraplength=event.width)
 
     def on_key_press(self, event):
         print("KEY PRESSED")
@@ -212,10 +216,22 @@ class MainApplication(tk.Frame):
     def save_solve_in_session(self, solve_time: str):
         assert self.session_data is not None
 
+        if self.solve_index == self.MAX_SOLVES:
+            messagebox.showerror("Saving Failure", ("Could not save the solve, because the "
+                                 "amount of solves per session was exceeded."),
+                                 parent=self.root)
+            return
+
         # Update left GUI list
-        tk.Label(self.frm_canvas_frame, text=f"{self.solve_index}. {solve_time}") \
-            .grid(row=self.solve_index, column=0, sticky="W")
+        tk.Label(self.frm_canvas_frame, text=f"{self.solve_index}. {solve_time}", font="Times, 13") \
+            .grid(row=self.MAX_SOLVES - self.solve_index, column=0, sticky="W")
         self.solve_index += 1
+
+        if self.solve_index == self.MAX_SOLVES:
+            messagebox.showinfo("Session Ended", ("The maximum amount of solves per session is exceeded."
+                                "This session is done."),
+                                parent=self.root)
+            return
 
         # Update list
         self.session_data.solves.append(float(solve_time))
@@ -436,8 +452,8 @@ class MainApplication(tk.Frame):
 
         # Fill left GUI list
         for solve in session_data.solves:
-            tk.Label(self.frm_canvas_frame, text=f"{self.solve_index}. {TWODEC(solve)}") \
-                .grid(row=self.solve_index, column=0, sticky="W")
+            tk.Label(self.frm_canvas_frame, text=f"{self.solve_index}. {TWODEC(solve)}", font="Times, 13") \
+                .grid(row=self.MAX_SOLVES - self.solve_index, column=0, sticky="W")
             self.solve_index += 1
 
         # Fill statistics
