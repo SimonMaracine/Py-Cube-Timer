@@ -10,11 +10,15 @@ from math import inf
 import src.globals
 from src.timer import Timer
 from src.scramble import generate_scramble
-from src.session import create_new_session, dump_data, SessionData, Solve, remember_last_session, \
-    get_last_session, load_session_data, data_folder_exists, recreate_data_folder, remove_solve_out_of_session
+from src.session import create_new_session, dump_data, SessionData, Solve, remember_last_session, get_last_session, \
+    load_session_data, remove_solve_out_of_session
 from src.select_session import SelectSession
+from src.settings import Settings
+from src.data import data_folder_exists, recreate_data_folder
 
 logging.basicConfig(level=logging.DEBUG)
+if not __debug__:
+    logging.disable()
 
 
 def TWODEC(n: float) -> str:
@@ -44,7 +48,7 @@ class MainApplication(tk.Frame):
 
         men_edit = tk.Menu(self)
         men_edit.add_command(label="Remove Last Solve", command=self.remove_last_solve_out_of_session)
-        men_edit.add_command(label="Settings", command=None)
+        men_edit.add_command(label="Settings", command=self.settings)
 
         men_help = tk.Menu(self)
         men_help.add_command(label="Info", command=None)
@@ -69,7 +73,7 @@ class MainApplication(tk.Frame):
 
         # Scramble area
         self.var_scramble = tk.StringVar(frm_scramble, value=generate_scramble())
-        self.lbl_scramble = tk.Label(frm_scramble, textvariable=self.var_scramble, font="Times, 25")
+        self.lbl_scramble = tk.Label(frm_scramble, textvariable=self.var_scramble, font="Times, 26")
         self.lbl_scramble.pack()
 
         frm_scramble.bind("<Configure>", self.on_window_resize)
@@ -136,22 +140,22 @@ class MainApplication(tk.Frame):
         bar_times = tk.Scrollbar(frm_times, orient="vertical")
         bar_times.pack(side="right", fill="y")
 
-        canvas_times = tk.Canvas(frm_times, width=140, borderwidth=0, yscrollcommand=bar_times.set)
-        canvas_times.pack(side="left", fill="both", expand=True)
+        self.canvas_times = tk.Canvas(frm_times, width=140, borderwidth=0, yscrollcommand=bar_times.set)
+        self.canvas_times.pack(side="left", fill="both", expand=True)
 
-        bar_times.configure(command=canvas_times.yview)
+        bar_times.configure(command=self.canvas_times.yview)
 
         self.frm_canvas_frame = tk.Frame(frm_times)
-        canvas_times.create_window((0, 0), window=self.frm_canvas_frame, anchor="nw")
-        self.frm_canvas_frame.bind("<Configure>", lambda event: self.frame_configure(canvas_times))
+        self.canvas_times.create_window((0, 0), window=self.frm_canvas_frame, anchor="nw")
+        self.frm_canvas_frame.bind("<Configure>", lambda event: self.frame_configure())
 
         self.solve_index = 1
         self.MAX_SOLVES = 9998
 
         # Timer area
         self.var_time = tk.StringVar(frm_timer, value="0.00")
-        lbl_time = tk.Label(frm_timer, textvariable=self.var_time, font="Times, 120")
-        lbl_time.pack()
+        self.lbl_time = tk.Label(frm_timer, textvariable=self.var_time, font="Times, 120")
+        self.lbl_time.pack()
 
         self.check_to_save_in_session()
 
@@ -181,8 +185,8 @@ class MainApplication(tk.Frame):
         # Load session; sets session_data variable
         self.load_last_session()
 
-    def frame_configure(self, canvas):
-        canvas.configure(scrollregion=canvas.bbox("all"))
+    def frame_configure(self):
+        self.canvas_times.configure(scrollregion=self.canvas_times.bbox("all"))
 
     def on_window_resize(self, event):
         self.lbl_scramble.configure(wraplength=event.width)
@@ -392,6 +396,10 @@ class MainApplication(tk.Frame):
 
         self.load_session(last_session_name)
 
+    def settings(self):
+        top_level = tk.Toplevel(self.root)
+        Settings(top_level, self.apply_settings)
+
     def new_session(self):
         top_level = tk.Toplevel(self.root)
         SelectSession(top_level, self.create_session, True)
@@ -461,6 +469,11 @@ class MainApplication(tk.Frame):
             self.update_statistics(session_data)
 
         self.session_data = session_data
+
+    def apply_settings(self, timer_size: int, scramble_size: int, enable_inspection: bool):
+        self.lbl_time.configure(font=f"Times, {timer_size}")
+        self.lbl_scramble.configure(font=f"Times, {scramble_size}")
+        self.timer.with_inspection = enable_inspection
 
     # Code copied from the internet and modified
     def kt_is_pressed(self):

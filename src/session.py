@@ -2,10 +2,11 @@ import json
 import dataclasses
 import logging
 import copy
-import os
-from os.path import join, isfile, isdir
+from os.path import join, isfile
 from typing import List, Optional
 from math import inf
+
+from src.data import DATA_PATH, recreate_data_file
 
 _SESSIONS_PATH = join("data", "sessions")
 _EMPTY_SESSION = {
@@ -15,9 +16,6 @@ _EMPTY_SESSION = {
     "best_ao5": "inf",
     "best_ao12": "inf",
     "solves": []
-}
-_EMPTY_DATA_FILE = {
-    "last_session": ""
 }
 
 
@@ -88,8 +86,8 @@ def remove_solve_out_of_session(file_name: str):
 # TODO make method to copy a session and rename it
 
 
-def remember_last_session(name: str):
-    with open(join("data", "data.json"), "r+") as file:
+def remember_last_session(name: str):  # TODO check for exceptions here and for missing entries!
+    with open(DATA_PATH, "r+") as file:
         contents = json.load(file)
 
         file.seek(0)
@@ -102,17 +100,17 @@ def remember_last_session(name: str):
 
 def get_last_session() -> str:
     try:
-        with open(join("data", "data.json"), "r") as file:
+        with open(DATA_PATH, "r") as file:
             contents = json.load(file)
             assert contents["last_session"]
             return contents["last_session"]
     # Let the caller handle these errors
     except FileNotFoundError:
-        _recreate_data_file()
+        recreate_data_file()
         logging.error("Data file was missing")
         raise
     except json.decoder.JSONDecodeError:
-        _recreate_data_file()
+        recreate_data_file()
         logging.error("Data file was somehow corrupted")
         raise ValueError
     except AssertionError:
@@ -149,17 +147,3 @@ def load_session_data(file_name: str) -> Optional[SessionData]:
 
 def session_exists(name: str) -> bool:
     return isfile(join(_SESSIONS_PATH, name + ".json"))
-
-
-def data_folder_exists() -> bool:
-    return isdir("data") and isdir(_SESSIONS_PATH)
-
-
-def recreate_data_folder():
-    os.mkdir("data")
-    os.mkdir("data/sessions")
-
-
-def _recreate_data_file():
-    with open(join("data", "data.json"), "w") as file:
-        json.dump(_EMPTY_DATA_FILE, file, indent=2)
