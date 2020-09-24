@@ -2,6 +2,7 @@ import json
 import dataclasses
 import logging
 import copy
+import os
 from os.path import join, isfile
 from typing import List, Optional
 from math import inf
@@ -83,19 +84,46 @@ def remove_solve_out_of_session(file_name: str):
         file.truncate()  # Don't forget this!
 
 
-# TODO make method to copy a session and rename it
+def rename_session(source_name: str, destination_name: str):
+    source = join(_SESSIONS_PATH, source_name + ".json")
+    destination = join(_SESSIONS_PATH, destination_name + ".json")
 
+    try:
+        os.rename(source, destination)
+    except FileNotFoundError as err:
+        logging.error(err)
+        raise
 
-def remember_last_session(name: str):  # TODO check for exceptions here and for missing entries!
-    with open(DATA_PATH, "r+") as file:
+    with open(destination, "r+") as file:
         contents = json.load(file)
 
         file.seek(0)
 
-        contents["last_session"] = name
-
+        contents["name"] = destination_name
         json.dump(contents, file, indent=2)
         file.truncate()
+
+
+def remember_last_session(name: str):
+    try:
+        with open(DATA_PATH, "r+") as file:
+            contents = json.load(file)
+
+            file.seek(0)
+
+            contents["last_session"] = name
+
+            json.dump(contents, file, indent=2)
+            file.truncate()
+    # Let the caller handle these errors
+    except FileNotFoundError:
+        recreate_data_file()
+        logging.error("Data file was missing")
+        raise
+    except json.decoder.JSONDecodeError:
+        recreate_data_file()
+        logging.error("Data file was somehow corrupted")
+        raise ValueError
 
 
 def get_last_session() -> str:
@@ -115,6 +143,10 @@ def get_last_session() -> str:
         raise ValueError
     except AssertionError:
         logging.info("There is no last session")
+        raise
+    except KeyError as err:
+        recreate_data_file()
+        logging.error(f"Missing entry: {err}")
         raise
 
 

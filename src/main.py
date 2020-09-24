@@ -11,9 +11,9 @@ import src.globals
 from src.timer import Timer
 from src.scramble import generate_scramble
 from src.session import create_new_session, dump_data, SessionData, Solve, remember_last_session, get_last_session, \
-    load_session_data, remove_solve_out_of_session
-from src.select_session import SelectSession
-from src.settings import Settings
+    load_session_data, remove_solve_out_of_session, rename_session
+from src.select_session import SelectSession, Mode
+from src.settings import Settings, get_settings
 from src.data import data_folder_exists, recreate_data_folder
 
 logging.basicConfig(level=logging.DEBUG)
@@ -48,6 +48,7 @@ class MainApplication(tk.Frame):
 
         men_edit = tk.Menu(self)
         men_edit.add_command(label="Remove Last Solve", command=self.remove_last_solve_out_of_session)
+        men_edit.add_command(label="Rename This Session", command=self.rename_this_session)
         men_edit.add_command(label="Settings", command=self.settings)
 
         men_help = tk.Menu(self)
@@ -71,9 +72,22 @@ class MainApplication(tk.Frame):
         frm_timer = tk.Frame(self)
         frm_timer.grid(row=1, column=1)
 
+        # Get settings from data
+        try:
+            timer_size, scramble_size, enable_inspection = get_settings()
+        except FileNotFoundError:
+            messagebox.showerror("Data Error", "The data file was missing.", parent=self.root)
+            timer_size = 120; scramble_size = 26; enable_inspection = True
+        except ValueError:
+            messagebox.showerror("Data Error", "The data file was corrupted.", parent=self.root)
+            timer_size = 120; scramble_size = 26; enable_inspection = True
+        except KeyError:
+            messagebox.showerror("Data Error", "Missing entry in data file.", parent=self.root)
+            timer_size = 120; scramble_size = 26; enable_inspection = True
+
         # Scramble area
         self.var_scramble = tk.StringVar(frm_scramble, value=generate_scramble())
-        self.lbl_scramble = tk.Label(frm_scramble, textvariable=self.var_scramble, font="Times, 26")
+        self.lbl_scramble = tk.Label(frm_scramble, textvariable=self.var_scramble, font=f"Times, {scramble_size}")
         self.lbl_scramble.pack()
 
         frm_scramble.bind("<Configure>", self.on_window_resize)
@@ -154,13 +168,13 @@ class MainApplication(tk.Frame):
 
         # Timer area
         self.var_time = tk.StringVar(frm_timer, value="0.00")
-        self.lbl_time = tk.Label(frm_timer, textvariable=self.var_time, font="Times, 120")
+        self.lbl_time = tk.Label(frm_timer, textvariable=self.var_time, font=f"Times, {timer_size}")
         self.lbl_time.pack()
 
         self.check_to_save_in_session()
 
         self.timer = Timer(self.var_time)
-        self.timer.with_inspection = True
+        self.timer.with_inspection = enable_inspection
         self.root.bind("<KeyPress>", self.kt_report_key_press)
         self.root.bind("<KeyRelease>", self.kt_report_key_release)
         self.root.bind("<Alt-z>", self.on_alt_z_key_press)
@@ -318,6 +332,21 @@ class MainApplication(tk.Frame):
             messagebox.showerror("Saving Failure", "Could not remove the solve, because the file is corrupted.",
                                  parent=self.root)
 
+    def rename_this_session(self):
+        top_level = tk.Toplevel(self.root)
+        SelectSession(top_level, self.rename_session, Mode.RENAME_SESSION)
+
+    def rename_session(self, name: str):
+        try:
+            rename_session(self.session_data.name, name)
+        except FileNotFoundError:
+            messagebox.showerror("Rename Failure", "Could not rename the session, because the file is missing.",
+                                 parent=self.root)
+            return
+
+        self.session_data.name = name
+        self.var_session_name.set(name)
+
     def check_to_save_in_session(self):
         if src.globals.can_save_solve_now:
             self.save_solve_in_session(self.var_time.get())
@@ -331,8 +360,17 @@ class MainApplication(tk.Frame):
             self.root.destroy()
             return
 
-        remember_last_session(self.session_data.name)
-        logging.debug(f"Session remembered is '{self.session_data.name}'")
+        try:
+            remember_last_session(self.session_data.name)
+        except FileNotFoundError:
+            messagebox.showerror("Saving Failure", "Could not remember last session, because the data file is missing.",
+                                 parent=self.root)
+        except ValueError:
+            messagebox.showerror("Saving Failure", "Could not remember last session, because the data file is corrupted.",
+                                 parent=self.root)
+        else:
+            logging.debug(f'Session remembered is "{self.session_data.name}"')
+
         self.root.destroy()
 
     def update_statistics(self, session_data: SessionData):
@@ -393,6 +431,10 @@ class MainApplication(tk.Frame):
             messagebox.showerror("Data Error", "The data file was missing.", parent=self.root)
             messagebox.showinfo("No Session", "Please select or create a new session to use.", parent=self.root)
             return
+        except KeyError:
+            messagebox.showerror("Data Error", "Missing entry in data file.", parent=self.root)
+            messagebox.showinfo("No Session", "Please select or create a new session to use.", parent=self.root)
+            return
 
         self.load_session(last_session_name)
 
@@ -402,11 +444,11 @@ class MainApplication(tk.Frame):
 
     def new_session(self):
         top_level = tk.Toplevel(self.root)
-        SelectSession(top_level, self.create_session, True)
+        SelectSession(top_level, self.create_session, Mode.NEW_SESSION)
 
     def open_session(self):
         top_level = tk.Toplevel(self.root)
-        SelectSession(top_level, self.load_session, False)
+        SelectSession(top_level, self.load_session, Mode.OPEN_SESSION)
 
     def create_session(self, name: str):
         self.session_data = create_new_session(name)

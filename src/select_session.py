@@ -1,3 +1,4 @@
+from enum import Enum, auto
 import tkinter as tk
 from typing import Callable
 from tkinter import messagebox
@@ -5,16 +6,27 @@ from tkinter import messagebox
 from src.session import session_exists
 
 
+class Mode(Enum):
+    NEW_SESSION = auto(),
+    OPEN_SESSION = auto(),
+    RENAME_SESSION = auto()
+
+
 class SelectSession(tk.Frame):
 
-    def __init__(self, top_level: tk.Toplevel, on_ok: Callable[[str], None], new: bool):
+    def __init__(self, top_level: tk.Toplevel, on_ok: Callable[[str], None], mode: Mode):
         super().__init__(top_level)
         self.top_level = top_level
         self.on_ok = on_ok
-        self.new = new
+        self.mode = mode
         self.pack(padx=10, pady=10, expand=True)
 
-        self.top_level.title("New Session" if self.new else "Open Session")
+        if self.mode == Mode.NEW_SESSION:
+            self.top_level.title("New Session")
+        elif self.mode == Mode.OPEN_SESSION:
+            self.top_level.title("Open Session")
+        elif self.mode == Mode.RENAME_SESSION:
+            self.top_level.title("Rename Session")
 
         frm_entry = tk.Frame(self)
         frm_entry.grid(row=0, column=0, columnspan=2, pady=16)
@@ -37,7 +49,7 @@ class SelectSession(tk.Frame):
             messagebox.showerror("Invalid Name", "Please insert a session name.", parent=self.top_level)
             return
 
-        if not self.new:  # Only check for existence, if it's opening mode
+        if self.mode == Mode.OPEN_SESSION:  # Only check for existence, if it's opening mode
             if not session_exists(session_name):
                 messagebox.showerror("Invalid Name", f'There is no session called "{session_name}".', parent=self.top_level)
                 return
