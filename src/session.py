@@ -8,10 +8,12 @@ from typing import List, Optional
 from math import inf
 
 from src.data import DATA_PATH, recreate_data_file
+from src.timer import interpret_time_in_seconds
 
 _SESSIONS_PATH = join("data", "sessions")
 _EMPTY_SESSION = {
     "name": "",
+    # All these times are formatted
     "mean": "inf",
     "best_time": "inf",
     "best_ao5": "inf",
@@ -22,7 +24,7 @@ _EMPTY_SESSION = {
 
 @dataclasses.dataclass
 class Solve:
-    time: float
+    time: str  # Formatted time
     scramble: str
     date: str
 
@@ -167,7 +169,8 @@ def load_session_data(file_name: str) -> Optional[SessionData]:
         best_time = float(contents["best_time"])
         best_ao5 = float(contents["best_ao5"])
         best_ao12 = float(contents["best_ao12"])
-        solves = [solve["time"] for solve in contents["solves"]]  # Solve times can sometimes contain only one decimal
+        # Solve times can sometimes contain only one decimal
+        solves: List[float] = [interpret_time_in_seconds(solve["time"]) for solve in contents["solves"]]
 
         assert name
     except KeyError as err:  # Missing contents

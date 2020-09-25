@@ -8,7 +8,7 @@ from typing import Optional
 from math import inf
 
 import src.globals
-from src.timer import Timer
+from src.timer import Timer, interpret_time_in_seconds, format_time_seconds
 from src.scramble import generate_scramble
 from src.session import create_new_session, dump_data, SessionData, Solve, remember_last_session, get_last_session, \
     load_session_data, remove_solve_out_of_session, rename_session
@@ -19,10 +19,6 @@ from src.data import data_folder_exists, recreate_data_folder
 logging.basicConfig(level=logging.DEBUG)
 if not __debug__:
     logging.disable()
-
-
-def TWODEC(n: float) -> str:
-    return "{:.2f}".format(n)
 
 
 class MainApplication(tk.Frame):
@@ -231,7 +227,7 @@ class MainApplication(tk.Frame):
     def on_alt_z_key_press(self, event):
         self.remove_last_solve_out_of_session()
 
-    def save_solve_in_session(self, solve_time: str):
+    def save_solve_in_session(self, solve_time: str):  # save_time is already formatted
         assert self.session_data is not None
 
         if self.solve_index == self.MAX_SOLVES:
@@ -252,18 +248,18 @@ class MainApplication(tk.Frame):
             return
 
         # Update list
-        self.session_data.solves.append(float(solve_time))
+        self.session_data.solves.append(interpret_time_in_seconds(solve_time))
 
         self.update_statistics(self.session_data)
 
         assert self.session_data.name
         try:
             dump_data(self.session_data.name + ".json",
-                      solve=Solve(self.session_data.solves[-1], self.var_scramble.get(), str(datetime.datetime.now())),
-                      mean=TWODEC(self.session_data.mean),
-                      best_time=TWODEC(self.session_data.best_time),
-                      best_ao5=TWODEC(self.session_data.best_ao5),
-                      best_ao12=TWODEC(self.session_data.best_ao12))
+                      solve=Solve(solve_time, self.var_scramble.get(), str(datetime.datetime.now())),
+                      mean=format_time_seconds(self.session_data.mean),
+                      best_time=format_time_seconds(self.session_data.best_time),
+                      best_ao5=format_time_seconds(self.session_data.best_ao5),
+                      best_ao12=format_time_seconds(self.session_data.best_ao12))
         except FileNotFoundError:
             logging.error("Could not save the solve in session, because the file is missing")
             messagebox.showerror("Saving Failure", "Could not save the solve in session, because the file is missing.",
@@ -272,6 +268,8 @@ class MainApplication(tk.Frame):
             logging.error("Could not save the solve, because the file is corrupted")
             messagebox.showerror("Saving Failure", "Could not save the solve, because the file is corrupted.",
                                  parent=self.root)
+        else:
+            logging.info("Saved solve")
 
         # Generate new scramble
         self.var_scramble.set(generate_scramble())
@@ -319,10 +317,10 @@ class MainApplication(tk.Frame):
         try:
             remove_solve_out_of_session(self.session_data.name + ".json")
             dump_data(self.session_data.name + ".json",
-                      mean=TWODEC(self.session_data.mean),
-                      best_time=TWODEC(self.session_data.best_time),
-                      best_ao5=TWODEC(self.session_data.best_ao5),
-                      best_ao12=TWODEC(self.session_data.best_ao12))
+                      mean=format_time_seconds(self.session_data.mean),
+                      best_time=format_time_seconds(self.session_data.best_time),
+                      best_ao5=format_time_seconds(self.session_data.best_ao5),
+                      best_ao12=format_time_seconds(self.session_data.best_ao12))
         except FileNotFoundError:
             logging.error("Could not remove the solve in session, because the file is missing")
             messagebox.showerror("Saving Failure", "Could not remove the solve in session, because the file is missing.",
@@ -350,7 +348,6 @@ class MainApplication(tk.Frame):
     def check_to_save_in_session(self):
         if src.globals.can_save_solve_now:
             self.save_solve_in_session(self.var_time.get())
-            logging.info("Saved solve")
             src.globals.can_save_solve_now = False
 
         self.after(700, self.check_to_save_in_session)
@@ -376,27 +373,27 @@ class MainApplication(tk.Frame):
     def update_statistics(self, session_data: SessionData):
         # Update mean
         session_data.mean = sum(session_data.solves) / len(session_data.solves)
-        self.var_session_mean.set(TWODEC(session_data.mean))
+        self.var_session_mean.set(format_time_seconds(session_data.mean))
         logging.debug(f"Mean is {session_data.mean}")
 
         # Update current time, current ao5 and current a012
-        self.var_current_time.set(TWODEC(session_data.solves[-1]))
+        self.var_current_time.set(format_time_seconds(session_data.solves[-1]))
 
         ao5_list = session_data.solves[-5:]
         if len(ao5_list) >= 5:
-            ao5 = sum(ao5_list) / 5
-            self.var_current_ao5.set(TWODEC(ao5))
+            ao5 = sum(ao5_list) / 5  # TODO this is not how ao5 is calculated
+            self.var_current_ao5.set(format_time_seconds(ao5))
             logging.debug(f"ao5 is {ao5}")
 
         ao12_list = session_data.solves[-12:]
         if len(ao12_list) >= 12:
             ao12 = sum(ao12_list) / 12
-            self.var_current_ao12.set(TWODEC(ao12))
+            self.var_current_ao12.set(format_time_seconds(ao12))
             logging.debug(f"ao12 is {ao12}")
 
         # Update best time, best ao5 and best ao12
         session_data.best_time = min(session_data.solves)
-        self.var_best_time.set(TWODEC(session_data.best_time))
+        self.var_best_time.set(format_time_seconds(session_data.best_time))
 
         if len(ao5_list) >= 5:
             averages = []
@@ -405,7 +402,7 @@ class MainApplication(tk.Frame):
                 averages.append(sum(five) / 5)
 
             session_data.best_ao5 = min(averages)
-            self.var_best_ao5.set(TWODEC(session_data.best_ao5))
+            self.var_best_ao5.set(format_time_seconds(session_data.best_ao5))
 
         if len(ao12_list) >= 12:
             averages = []
@@ -414,7 +411,7 @@ class MainApplication(tk.Frame):
                 averages.append(sum(twelve) / 12)
 
             session_data.best_ao12 = min(averages)
-            self.var_best_ao12.set(TWODEC(session_data.best_ao12))
+            self.var_best_ao12.set(format_time_seconds(session_data.best_ao12))
 
     def load_last_session(self):
         try:
@@ -502,8 +499,8 @@ class MainApplication(tk.Frame):
 
         # Fill left GUI list
         for solve in session_data.solves:
-            tk.Label(self.frm_canvas_frame, text=f"{self.solve_index}. {TWODEC(solve)}", font="Times, 13") \
-                .grid(row=self.MAX_SOLVES - self.solve_index, column=0, sticky="W")
+            tk.Label(self.frm_canvas_frame, text=f"{self.solve_index}. {format_time_seconds(solve)}",
+                     font="Times, 13").grid(row=self.MAX_SOLVES - self.solve_index, column=0, sticky="W")
             self.solve_index += 1
 
         # Fill statistics

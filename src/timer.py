@@ -1,5 +1,6 @@
 import threading
 import logging
+import math
 import tkinter as tk
 from timeit import default_timer
 
@@ -69,11 +70,77 @@ class Timer:
         while self._running:
             self._timing_exit_event.wait(0.098)
             self._shallow_time += 1
-            self._variable.set("{:.1f}".format(self._shallow_time / 10))
+            self._variable.set(Timer.format_time_deciseconds(self._shallow_time))
 
         stop_time = default_timer()
-        actual_time = "{:.2f}".format(stop_time - start_time)  # TODO format the time correctly
+        actual_time = format_time_seconds(stop_time - start_time)
         self._variable.set(actual_time)
         src.globals.can_save_solve_now = True
 
         logging.debug(f"Actual time: {actual_time}")
+
+    @staticmethod
+    def format_time_deciseconds(time: int) -> str:
+        """
+        Turns into this: 0:00.0
+
+        """
+        in_minutes = time / 10
+        fractional, whole = math.modf(in_minutes)
+
+        minutes = int(whole // 60)
+        if minutes:
+            seconds = f"{int(whole) % 60}".zfill(2)
+        else:
+            seconds = f"{int(whole) % 60}"
+        deciseconds = f"{fractional:.1f}"[2:3]
+
+        if minutes:
+            return f"{minutes}:{seconds}.{deciseconds}"
+        else:
+            return f"{seconds}.{deciseconds}"
+
+
+def format_time_seconds(time: float) -> str:
+    """
+    Turns into this: 0:00.00
+
+    """
+    if time == math.inf:
+        return "inf"
+
+    fractional, whole = math.modf(time)
+
+    minutes = int(whole // 60)
+    if minutes:
+        seconds = f"{int(whole) % 60}".zfill(2)
+    else:
+        seconds = f"{int(whole) % 60}"
+    deciseconds = f"{fractional:0.2f}"[2:4]
+
+    if minutes:
+        return f"{minutes}:{seconds}.{deciseconds}"
+    else:
+        return f"{seconds}.{deciseconds}"
+
+
+def interpret_time_in_seconds(time: str) -> float:
+    """
+    time is for example 1:17.30
+
+    """
+    colon = time.find(":")
+    dot = time.find(".")
+
+    if colon != -1:
+        minutes = int(time[0:colon])
+        seconds = int(time[colon + 1:dot])
+    else:
+        seconds = int(time[0:dot])
+
+    deciseconds = float("0." + time[dot + 1:])
+
+    if colon != -1:
+        return minutes * 60 + seconds + deciseconds
+    else:
+        return seconds + deciseconds

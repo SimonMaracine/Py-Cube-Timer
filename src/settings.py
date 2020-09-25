@@ -48,7 +48,7 @@ class Settings(tk.Frame):
         frm_buttons.grid(row=4, column=0, columnspan=2)
 
         tk.Button(frm_buttons, text="Reset to deafult", command=self.default).grid(row=0, column=0)
-        tk.Button(frm_buttons, text="Apply", command=self.apply).grid(row=0, column=1, padx=(5, 0))
+        tk.Button(frm_buttons, text="Apply", command=self.apply).grid(row=0, column=1, padx=(6, 0))
 
     def apply(self):
         timer_size = self.scl_timer_size.get()
