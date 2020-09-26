@@ -11,7 +11,7 @@ import src.globals
 from src.timer import Timer, interpret_time_in_seconds, format_time_seconds
 from src.scramble import generate_scramble
 from src.session import create_new_session, dump_data, SessionData, Solve, remember_last_session, get_last_session, \
-    load_session_data, remove_solve_out_of_session, rename_session
+    load_session_data, remove_solve_out_of_session, rename_session, destroy_session
 from src.select_session import SelectSession, Mode
 from src.settings import Settings, get_settings
 from src.data import data_folder_exists, recreate_data_folder
@@ -45,6 +45,7 @@ class MainApplication(tk.Frame):
         men_edit = tk.Menu(self)
         men_edit.add_command(label="Remove Last Solve", command=self.remove_last_solve_out_of_session)
         men_edit.add_command(label="Rename This Session", command=self.rename_this_session)
+        men_edit.add_command(label="Delete This Session", command=self.delete_this_session)
         men_edit.add_command(label="Settings", command=self.settings)
 
         men_help = tk.Menu(self)
@@ -113,32 +114,32 @@ class MainApplication(tk.Frame):
         lbl_ao12 = tk.Label(frm_statistics, text="ao12", font="Times, 13")
         lbl_ao12.grid(row=3, column=0)
 
-        self.var_current_time = tk.DoubleVar(frm_statistics, value="0.00")
+        self.var_current_time = tk.DoubleVar(frm_statistics, value="n/a")
         lbl_current_time = tk.Label(frm_statistics, textvariable=self.var_current_time, font="Times, 13")
         lbl_current_time.grid(row=1, column=1)
 
-        self.var_current_ao5 = tk.DoubleVar(frm_statistics, value="0.00")
+        self.var_current_ao5 = tk.DoubleVar(frm_statistics, value="n/a")
         lbl_current_ao5 = tk.Label(frm_statistics, textvariable=self.var_current_ao5, font="Times, 13")
         lbl_current_ao5.grid(row=2, column=1)
 
-        self.var_current_ao12 = tk.DoubleVar(frm_statistics, value="0.00")
+        self.var_current_ao12 = tk.DoubleVar(frm_statistics, value="n/a")
         lbl_current_ao12 = tk.Label(frm_statistics, textvariable=self.var_current_ao12, font="Times, 13")
         lbl_current_ao12.grid(row=3, column=1)
 
-        self.var_best_time = tk.DoubleVar(frm_statistics, value="0.00")
+        self.var_best_time = tk.DoubleVar(frm_statistics, value="n/a")
         lbl_best_time = tk.Label(frm_statistics, textvariable=self.var_best_time, font="Times, 13")
         lbl_best_time.grid(row=1, column=2)
 
-        self.var_best_ao5 = tk.DoubleVar(frm_statistics, value="0.00")
+        self.var_best_ao5 = tk.DoubleVar(frm_statistics, value="n/a")
         lbl_best_ao5 = tk.Label(frm_statistics, textvariable=self.var_best_ao5, font="Times, 13")
         lbl_best_ao5.grid(row=2, column=2)
 
-        self.var_best_ao12 = tk.DoubleVar(frm_statistics, value="0.00")
+        self.var_best_ao12 = tk.DoubleVar(frm_statistics, value="n/a")
         lbl_best_ao12 = tk.Label(frm_statistics, textvariable=self.var_best_ao12, font="Times, 13")
         lbl_best_ao12.grid(row=3, column=2)
 
         # Session mean
-        self.var_session_mean = tk.StringVar(frm_left_side, value="0.00")
+        self.var_session_mean = tk.StringVar(frm_left_side, value="n/a")
         lbl_session_mean = tk.Label(frm_left_side, textvariable=self.var_session_mean, font="Times, 19")
 
         lbl_session_mean.grid(row=2, column=0)
@@ -294,16 +295,16 @@ class MainApplication(tk.Frame):
 
         # Update these which don't always show
         if len(self.session_data.solves) < 5:
-            self.var_current_ao5.set("0.00")
-            self.var_best_ao5.set("0.00")
+            self.var_current_ao5.set("n/a")
+            self.var_best_ao5.set("n/a")
         elif len(self.session_data.solves) < 12:
-            self.var_current_ao12.set("0.00")
-            self.var_best_ao12.set("0.00")
+            self.var_current_ao12.set("n/a")
+            self.var_best_ao12.set("n/a")
 
         if not self.session_data.solves:
-            self.var_current_time.set("0.00")
-            self.var_best_time.set("0.00")
-            self.var_session_mean.set("0.00")
+            self.var_current_time.set("n/a")
+            self.var_best_time.set("n/a")
+            self.var_session_mean.set("n/a")
 
         assert self.session_data.name
         try:
@@ -332,6 +333,17 @@ class MainApplication(tk.Frame):
         self.session_data.name = name
         self.var_session_name.set(name)
 
+    def delete_this_session(self):
+        if messagebox.askyesno("Delete Session", "Are you sure you want to delete this session?", parent=self.root):
+            # Fill session name
+            self.var_session_name.set("")
+
+            # Clear first
+            self.clear_left_UI()
+
+            destroy_session(self.session_data.name)
+            self.session_data.name = ""
+
     def check_to_save_in_session(self):
         if src.globals.can_save_solve_now:
             self.save_solve_in_session(self.var_time.get())
@@ -358,7 +370,7 @@ class MainApplication(tk.Frame):
         self.root.destroy()
 
     @staticmethod
-    def calculate_ao5(list_5: list):
+    def calculate_ao5(list_5: list) -> float:
         smallest = min(list_5)
         largest = max(list_5)
 
@@ -368,7 +380,7 @@ class MainApplication(tk.Frame):
         return sum(clone) / 3
 
     @staticmethod
-    def calculate_ao12(list_12: list):
+    def calculate_ao12(list_12: list) -> float:
         smallest = min(list_12)
         largest = max(list_12)
 
@@ -454,6 +466,22 @@ class MainApplication(tk.Frame):
         top_level = tk.Toplevel(self.root)
         SelectSession(top_level, self.load_session, Mode.OPEN_SESSION)
 
+    def clear_left_UI(self):
+        # Only these must be reset
+        for label in self.frm_canvas_frame.winfo_children():
+            label.destroy()
+
+        self.var_current_time.set("n/a")
+        self.var_current_ao5.set("n/a")
+        self.var_current_ao12.set("n/a")
+        self.var_best_time.set("n/a")
+        self.var_best_ao5.set("n/a")
+        self.var_best_ao12.set("n/a")
+        self.var_session_mean.set("n/a")
+
+        self.solve_index = 1
+        self.var_time.set("0.00")
+
     def create_session(self, name: str):
         self.session_data = create_new_session(name)
 
@@ -461,20 +489,7 @@ class MainApplication(tk.Frame):
         self.var_session_name.set(name)
 
         # Clear first
-        # Only these must be reset
-        for label in self.frm_canvas_frame.winfo_children():
-            label.destroy()
-
-        self.var_current_time.set("0.00")
-        self.var_current_ao5.set("0.00")
-        self.var_current_ao12.set("0.00")
-        self.var_best_time.set("0.00")
-        self.var_best_ao5.set("0.00")
-        self.var_best_ao12.set("0.00")
-        self.var_session_mean.set("0.00")
-
-        self.solve_index = 1
-        self.var_time.set("0.00")
+        self.clear_left_UI()
 
     def load_session(self, name: str):
         session_data = load_session_data(name + ".json")
@@ -488,21 +503,7 @@ class MainApplication(tk.Frame):
         self.var_session_name.set(session_data.name)
 
         # Clear first
-        # Only these must be reset
-        for label in self.frm_canvas_frame.winfo_children():
-            label.destroy()
-
-        self.var_current_time.set("0.00")
-        self.var_current_ao5.set("0.00")
-        self.var_current_ao12.set("0.00")
-        self.var_best_time.set("0.00")
-        self.var_best_ao5.set("0.00")
-        self.var_best_ao12.set("0.00")
-        self.var_session_mean.set("0.00")
-
-        self.solve_index = 1
-        self.var_time.set("0.00")
-        # Yeah, not very DRY...
+        self.clear_left_UI()
 
         # Fill left GUI list
         for solve in session_data.solves:

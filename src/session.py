@@ -93,6 +93,10 @@ def rename_session(source_name: str, destination_name: str):
         file.truncate()
 
 
+def destroy_session(name: str):
+    os.remove(join(_SESSIONS_PATH, name + ".json"))
+
+
 def remember_last_session(name: str):
     try:
         with open(DATA_PATH, "r+") as file:
