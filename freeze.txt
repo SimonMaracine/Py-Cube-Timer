@@ -1,0 +1,2 @@
+python -OO -m PyInstaller Py-Cube-Timer.py --onefile --windowed
+
