@@ -15,6 +15,7 @@ from src.session import create_new_session, dump_data, SessionData, Solve, remem
 from src.select_session import SelectSession, Mode
 from src.settings import Settings, get_settings, rgb_to_hex
 from src.data import data_folder_exists, recreate_data_folder
+from src.about import About
 
 logging.basicConfig(level=logging.DEBUG)
 if not __debug__:
@@ -51,7 +52,7 @@ class MainApplication(tk.Frame):
 
         men_help = tk.Menu(self)
         men_help.add_command(label="Info", command=None)
-        men_help.add_command(label="About", command=None)
+        men_help.add_command(label="About", command=self.about)
 
         men_main = tk.Menu(self)
         men_main.add_cascade(label="File", menu=men_file)
@@ -209,7 +210,6 @@ class MainApplication(tk.Frame):
         self.lbl_scramble.configure(wraplength=event.width)
 
     def on_key_press(self, event):
-        print("KEY PRESSED")
         if self.timer.is_running() and not self.timer.is_inspecting():
             self.timer.stop()
             self.stopped_timer = True
@@ -217,7 +217,6 @@ class MainApplication(tk.Frame):
             logging.debug("Timer STOP")
 
     def on_key_release(self, event):
-        print("KEY RELEASED")
         if self.session_data is None:
             messagebox.showerror("No Session", "Please select or create a new session to use the timer.", parent=self.root)
             return
@@ -463,6 +462,10 @@ class MainApplication(tk.Frame):
     def settings(self):
         top_level = tk.Toplevel(self.root)
         Settings(top_level, self.apply_settings)
+
+    def about(self):
+        top_level = tk.Toplevel(self.root)
+        About(top_level)
 
     def new_session(self):
         top_level = tk.Toplevel(self.root)
