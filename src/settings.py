@@ -78,7 +78,7 @@ class Settings(tk.Frame):
         # Default background (maybe): 240, 240, 237
 
         frm_buttons = tk.Frame(self)
-        frm_buttons.grid(row=5, column=0, columnspan=2, pady=(8, 0))
+        frm_buttons.grid(row=5, column=0, columnspan=2, pady=(12, 0))
 
         tk.Button(frm_buttons, text="Reset to deafult", command=self.default).grid(row=0, column=0)
         tk.Button(frm_buttons, text="Apply", command=self.apply).grid(row=0, column=1, padx=(6, 0))
@@ -86,7 +86,7 @@ class Settings(tk.Frame):
 
     @staticmethod
     def constrain(x: str):
-        x = int(x)
+        x = int(x)  # ValueError could be raised even from here
         if x < 0 or x > 255:
             raise ValueError
         return x

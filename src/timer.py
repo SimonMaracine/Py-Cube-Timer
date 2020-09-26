@@ -1,6 +1,7 @@
 import threading
 import logging
 import math
+import sys
 import tkinter as tk
 from timeit import default_timer
 
@@ -8,6 +9,13 @@ import src.globals
 
 
 class Timer:
+
+    if sys.platform == "win32":
+        WAIT_TIME_INSPECTION = 0.97
+        WAIT_TIME_SOLVE = 0.097
+    else:
+        WAIT_TIME_INSPECTION = 0.99
+        WAIT_TIME_SOLVE = 0.099
 
     def __init__(self, variable: tk.StringVar):
         self._variable = variable
@@ -60,7 +68,7 @@ class Timer:
             self._variable.set(str(self._inspection_time))
 
             while self._inspecting:
-                self._inspection_exit_event.wait(0.98)
+                self._inspection_exit_event.wait(Timer.WAIT_TIME_INSPECTION)
                 self._inspection_time -= 1
                 if self._inspection_time >= 0:
                     self._variable.set(str(self._inspection_time))
@@ -68,12 +76,12 @@ class Timer:
         start_time = default_timer()
 
         while self._running:
-            self._timing_exit_event.wait(0.098)
+            self._timing_exit_event.wait(Timer.WAIT_TIME_SOLVE)
             self._shallow_time += 1
             self._variable.set(Timer._format_time_deciseconds(self._shallow_time))
 
         stop_time = default_timer()
-        actual_time = format_time_seconds(stop_time - start_time)
+        actual_time = format_time_seconds(stop_time - start_time + 0.05)
         self._variable.set(actual_time)
         src.globals.can_save_solve_now = True
 
