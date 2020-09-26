@@ -2,10 +2,10 @@ import logging
 import time
 import threading
 import datetime
+import copy
 import tkinter as tk
 from tkinter import messagebox
 from typing import Optional
-from math import inf
 
 import src.globals
 from src.timer import Timer, interpret_time_in_seconds, format_time_seconds
@@ -227,7 +227,7 @@ class MainApplication(tk.Frame):
     def on_alt_z_key_press(self, event):
         self.remove_last_solve_out_of_session()
 
-    def save_solve_in_session(self, solve_time: str):  # save_time is already formatted
+    def save_solve_in_session(self, solve_time: str):  # solve_time is already formatted
         assert self.session_data is not None
 
         if self.solve_index == self.MAX_SOLVES:
@@ -255,11 +255,7 @@ class MainApplication(tk.Frame):
         assert self.session_data.name
         try:
             dump_data(self.session_data.name + ".json",
-                      solve=Solve(solve_time, self.var_scramble.get(), str(datetime.datetime.now())),
-                      mean=format_time_seconds(self.session_data.mean),
-                      best_time=format_time_seconds(self.session_data.best_time),
-                      best_ao5=format_time_seconds(self.session_data.best_ao5),
-                      best_ao12=format_time_seconds(self.session_data.best_ao12))
+                      Solve(solve_time, self.var_scramble.get(), str(datetime.datetime.now())))
         except FileNotFoundError:
             logging.error("Could not save the solve in session, because the file is missing")
             messagebox.showerror("Saving Failure", "Could not save the solve in session, because the file is missing.",
@@ -298,29 +294,20 @@ class MainApplication(tk.Frame):
 
         # Update these which don't always show
         if len(self.session_data.solves) < 5:
-            self.session_data.best_ao5 = inf
             self.var_current_ao5.set("0.00")
             self.var_best_ao5.set("0.00")
         elif len(self.session_data.solves) < 12:
-            self.session_data.best_ao12 = inf
             self.var_current_ao12.set("0.00")
             self.var_best_ao12.set("0.00")
 
         if not self.session_data.solves:
             self.var_current_time.set("0.00")
-            self.session_data.best_time = inf
             self.var_best_time.set("0.00")
-            self.session_data.mean = inf
             self.var_session_mean.set("0.00")
 
         assert self.session_data.name
         try:
             remove_solve_out_of_session(self.session_data.name + ".json")
-            dump_data(self.session_data.name + ".json",
-                      mean=format_time_seconds(self.session_data.mean),
-                      best_time=format_time_seconds(self.session_data.best_time),
-                      best_ao5=format_time_seconds(self.session_data.best_ao5),
-                      best_ao12=format_time_seconds(self.session_data.best_ao12))
         except FileNotFoundError:
             logging.error("Could not remove the solve in session, because the file is missing")
             messagebox.showerror("Saving Failure", "Could not remove the solve in session, because the file is missing.",
@@ -370,48 +357,68 @@ class MainApplication(tk.Frame):
 
         self.root.destroy()
 
+    @staticmethod
+    def calculate_ao5(list_5: list):
+        smallest = min(list_5)
+        largest = max(list_5)
+
+        clone = copy.copy(list_5)
+        clone.remove(smallest)
+        clone.remove(largest)
+        return sum(clone) / 3
+
+    @staticmethod
+    def calculate_ao12(list_12: list):
+        smallest = min(list_12)
+        largest = max(list_12)
+
+        clone = copy.copy(list_12)
+        clone.remove(smallest)
+        clone.remove(largest)
+        return sum(clone) / 10
+
     def update_statistics(self, session_data: SessionData):
         # Update mean
-        session_data.mean = sum(session_data.solves) / len(session_data.solves)
-        self.var_session_mean.set(format_time_seconds(session_data.mean))
-        logging.debug(f"Mean is {session_data.mean}")
+        mean = sum(session_data.solves) / len(session_data.solves)
+        self.var_session_mean.set(format_time_seconds(mean))
+        logging.debug(f"Mean is {mean}")
 
         # Update current time, current ao5 and current a012
         self.var_current_time.set(format_time_seconds(session_data.solves[-1]))
 
         ao5_list = session_data.solves[-5:]
         if len(ao5_list) >= 5:
-            ao5 = sum(ao5_list) / 5  # TODO this is not how ao5 is calculated
+            ao5 = MainApplication.calculate_ao5(ao5_list)
             self.var_current_ao5.set(format_time_seconds(ao5))
             logging.debug(f"ao5 is {ao5}")
 
         ao12_list = session_data.solves[-12:]
         if len(ao12_list) >= 12:
-            ao12 = sum(ao12_list) / 12
+            ao12 = MainApplication.calculate_ao12(ao12_list)
             self.var_current_ao12.set(format_time_seconds(ao12))
             logging.debug(f"ao12 is {ao12}")
 
         # Update best time, best ao5 and best ao12
-        session_data.best_time = min(session_data.solves)
-        self.var_best_time.set(format_time_seconds(session_data.best_time))
+        best_time = min(session_data.solves)
+        self.var_best_time.set(format_time_seconds(best_time))
 
         if len(ao5_list) >= 5:
             averages = []
             for i in range(len(session_data.solves) - 4):
                 five = session_data.solves[0 + i:5 + i]
-                averages.append(sum(five) / 5)
+                averages.append(MainApplication.calculate_ao5(five))
 
-            session_data.best_ao5 = min(averages)
-            self.var_best_ao5.set(format_time_seconds(session_data.best_ao5))
+            best_ao5 = min(averages)
+            self.var_best_ao5.set(format_time_seconds(best_ao5))
 
         if len(ao12_list) >= 12:
             averages = []
             for i in range(len(session_data.solves) - 11):
                 twelve = session_data.solves[0 + i:12 + i]
-                averages.append(sum(twelve) / 12)
+                averages.append(MainApplication.calculate_ao12(twelve))
 
-            session_data.best_ao12 = min(averages)
-            self.var_best_ao12.set(format_time_seconds(session_data.best_ao12))
+            best_ao12 = min(averages)
+            self.var_best_ao12.set(format_time_seconds(best_ao12))
 
     def load_last_session(self):
         try:

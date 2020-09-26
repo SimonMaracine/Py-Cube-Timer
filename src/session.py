@@ -14,10 +14,6 @@ _SESSIONS_PATH = join("data", "sessions")
 _EMPTY_SESSION = {
     "name": "",
     # All these times are formatted
-    "mean": "inf",
-    "best_time": "inf",
-    "best_ao5": "inf",
-    "best_ao12": "inf",
     "solves": []
 }
 
@@ -32,10 +28,6 @@ class Solve:
 @dataclasses.dataclass
 class SessionData:
     name: str
-    mean: float
-    best_time: float
-    best_ao5: float
-    best_ao12: float
     solves: List[float]  # Solve times can sometimes contain only one decimal
 
 
@@ -45,10 +37,10 @@ def create_new_session(name: str) -> SessionData:
         data["name"] = name
         json.dump(data, file, indent=2)
 
-    return SessionData(name, inf, inf, inf, inf, [])
+    return SessionData(name, [])
 
 
-def dump_data(file_name: str, mean: str, best_time: str, best_ao5: str, best_ao12: str, solve: Solve = None):
+def dump_data(file_name: str, solve: Solve):
     with open(join(_SESSIONS_PATH, file_name), "r+") as file:
         try:
             contents = json.load(file)
@@ -58,12 +50,7 @@ def dump_data(file_name: str, mean: str, best_time: str, best_ao5: str, best_ao1
 
         file.seek(0)
 
-        if solve is not None:
-            contents["solves"].append(solve.__dict__)
-        contents["mean"] = mean
-        contents["best_time"] = best_time
-        contents["best_ao5"] = best_ao5
-        contents["best_ao12"] = best_ao12
+        contents["solves"].append(solve.__dict__)
 
         json.dump(contents, file, indent=2)
         file.truncate()
@@ -165,10 +152,6 @@ def load_session_data(file_name: str) -> Optional[SessionData]:
 
     try:
         name = contents["name"]
-        mean: float = interpret_time_in_seconds(contents["mean"])
-        best_time: float = interpret_time_in_seconds(contents["best_time"])
-        best_ao5: float = interpret_time_in_seconds(contents["best_ao5"])
-        best_ao12: float = interpret_time_in_seconds(contents["best_ao12"])
         # Solve times can sometimes contain only one decimal
         solves: List[float] = [interpret_time_in_seconds(solve["time"]) for solve in contents["solves"]]
 
@@ -177,7 +160,7 @@ def load_session_data(file_name: str) -> Optional[SessionData]:
         logging.error(f"Missing entry: {err}")
         return None
     else:
-        return SessionData(name, mean, best_time, best_ao5, best_ao12, solves)
+        return SessionData(name, solves)
 
 
 def session_exists(name: str) -> bool:
