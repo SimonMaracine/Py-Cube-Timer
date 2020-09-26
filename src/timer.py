@@ -70,7 +70,7 @@ class Timer:
         while self._running:
             self._timing_exit_event.wait(0.098)
             self._shallow_time += 1
-            self._variable.set(Timer.format_time_deciseconds(self._shallow_time))
+            self._variable.set(Timer._format_time_deciseconds(self._shallow_time))
 
         stop_time = default_timer()
         actual_time = format_time_seconds(stop_time - start_time)
@@ -80,7 +80,7 @@ class Timer:
         logging.debug(f"Actual time: {actual_time}")
 
     @staticmethod
-    def format_time_deciseconds(time: int) -> str:
+    def _format_time_deciseconds(time: int) -> str:
         """
         Turns into this: 0:00.0
 
@@ -129,6 +129,9 @@ def interpret_time_in_seconds(time: str) -> float:
     time is for example 1:17.30
 
     """
+    if time == "inf":
+        return math.inf
+
     colon = time.find(":")
     dot = time.find(".")
 

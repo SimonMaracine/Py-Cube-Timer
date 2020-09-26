@@ -80,7 +80,7 @@ def remove_solve_out_of_session(file_name: str):
         file.seek(0)
 
         logging.debug(f"Removing solve {contents['solves'][-1]}")
-        del contents['solves'][-1]
+        del contents["solves"][-1]
 
         json.dump(contents, file, indent=2)
         file.truncate()  # Don't forget this!
@@ -165,10 +165,10 @@ def load_session_data(file_name: str) -> Optional[SessionData]:
 
     try:
         name = contents["name"]
-        mean = float(contents["mean"])
-        best_time = float(contents["best_time"])
-        best_ao5 = float(contents["best_ao5"])
-        best_ao12 = float(contents["best_ao12"])
+        mean: float = interpret_time_in_seconds(contents["mean"])
+        best_time: float = interpret_time_in_seconds(contents["best_time"])
+        best_ao5: float = interpret_time_in_seconds(contents["best_ao5"])
+        best_ao12: float = interpret_time_in_seconds(contents["best_ao12"])
         # Solve times can sometimes contain only one decimal
         solves: List[float] = [interpret_time_in_seconds(solve["time"]) for solve in contents["solves"]]
 
