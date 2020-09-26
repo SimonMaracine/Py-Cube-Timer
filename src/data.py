@@ -14,8 +14,14 @@ EMPTY_DATA_FILE = {
 
 
 def recreate_data_folder():
-    os.mkdir("data")
-    os.mkdir("data/sessions")
+    try:
+        os.mkdir("data")
+    except FileExistsError:
+        pass
+    try:
+        os.mkdir("data/sessions")
+    except FileExistsError:  # Just to be sure...
+        pass
 
 
 def data_folder_exists() -> bool:
