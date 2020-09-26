@@ -5,7 +5,6 @@ import copy
 import os
 from os.path import join, isfile
 from typing import List, Optional
-from math import inf
 
 from src.data import DATA_PATH, recreate_data_file
 from src.timer import interpret_time_in_seconds

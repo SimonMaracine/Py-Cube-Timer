@@ -13,7 +13,7 @@ from src.scramble import generate_scramble
 from src.session import create_new_session, dump_data, SessionData, Solve, remember_last_session, get_last_session, \
     load_session_data, remove_solve_out_of_session, rename_session, destroy_session
 from src.select_session import SelectSession, Mode
-from src.settings import Settings, get_settings
+from src.settings import Settings, get_settings, rgb_to_hex
 from src.data import data_folder_exists, recreate_data_folder
 
 logging.basicConfig(level=logging.DEBUG)
@@ -35,6 +35,7 @@ class MainApplication(tk.Frame):
         self.root.option_add("*tearOff", False)
         self.root.title("Py-Cube-Timer")
         self.root.wm_protocol("WM_DELETE_WINDOW", self.exit)
+        self.root.geometry("1024x576")
 
         # Main menu
         men_file = tk.Menu(self)
@@ -71,16 +72,21 @@ class MainApplication(tk.Frame):
 
         # Get settings from data
         try:
-            timer_size, scramble_size, enable_inspection = get_settings()
+            timer_size, scramble_size, enable_inspection, background_color, foreground_color = get_settings()
         except FileNotFoundError:
             messagebox.showerror("Data Error", "The data file was missing.", parent=self.root)
-            timer_size = 120; scramble_size = 26; enable_inspection = True
+            timer_size = 120; scramble_size = 28; enable_inspection = True
+            background_color = [240, 240, 237]; foreground_color = [0, 0, 0]
         except ValueError:
             messagebox.showerror("Data Error", "The data file was corrupted.", parent=self.root)
-            timer_size = 120; scramble_size = 26; enable_inspection = True
+            timer_size = 120; scramble_size = 28; enable_inspection = True
+            background_color = [240, 240, 237]; foreground_color = [0, 0, 0]
         except KeyError:
             messagebox.showerror("Data Error", "Missing entry in data file.", parent=self.root)
-            timer_size = 120; scramble_size = 26; enable_inspection = True
+            timer_size = 120; scramble_size = 28; enable_inspection = True
+            background_color = [240, 240, 237]; foreground_color = [0, 0, 0]
+
+        self.root.tk_setPalette(background=rgb_to_hex(background_color), foreground=rgb_to_hex(foreground_color))
 
         # Scramble area
         self.var_scramble = tk.StringVar(frm_scramble, value=generate_scramble())
@@ -92,57 +98,57 @@ class MainApplication(tk.Frame):
         # Left side area
         # Session name
         self.var_session_name = tk.StringVar(frm_left_side, value="")
-        lbl_session_name = tk.Label(frm_left_side, textvariable=self.var_session_name, font="Times, 13")
-        lbl_session_name.grid(row=0, column=0)
+        lbl_session_name = tk.Label(frm_left_side, textvariable=self.var_session_name, font="Times, 15")
+        lbl_session_name.grid(row=0, column=0, pady=(0, 6))
 
         # Statistics
         frm_statistics = tk.Frame(frm_left_side)
         frm_statistics.grid(row=1, column=0)
 
-        lbl_current = tk.Label(frm_statistics, text="current", font="Times, 13")
+        lbl_current = tk.Label(frm_statistics, text="current", font="Times, 14")
         lbl_current.grid(row=0, column=1)
 
-        lbl_best = tk.Label(frm_statistics, text="best", font="Times, 13")
+        lbl_best = tk.Label(frm_statistics, text="best", font="Times, 14")
         lbl_best.grid(row=0, column=2)
 
-        lbl_time = tk.Label(frm_statistics, text="time", font="Times, 13")
+        lbl_time = tk.Label(frm_statistics, text="time", font="Times, 14")
         lbl_time.grid(row=1, column=0)
 
-        lbl_ao5 = tk.Label(frm_statistics, text="ao5", font="Times, 13")
+        lbl_ao5 = tk.Label(frm_statistics, text="ao5", font="Times, 14")
         lbl_ao5.grid(row=2, column=0)
 
-        lbl_ao12 = tk.Label(frm_statistics, text="ao12", font="Times, 13")
+        lbl_ao12 = tk.Label(frm_statistics, text="ao12", font="Times, 14")
         lbl_ao12.grid(row=3, column=0)
 
         self.var_current_time = tk.DoubleVar(frm_statistics, value="n/a")
-        lbl_current_time = tk.Label(frm_statistics, textvariable=self.var_current_time, font="Times, 13")
+        lbl_current_time = tk.Label(frm_statistics, textvariable=self.var_current_time, font="Times, 14")
         lbl_current_time.grid(row=1, column=1)
 
         self.var_current_ao5 = tk.DoubleVar(frm_statistics, value="n/a")
-        lbl_current_ao5 = tk.Label(frm_statistics, textvariable=self.var_current_ao5, font="Times, 13")
+        lbl_current_ao5 = tk.Label(frm_statistics, textvariable=self.var_current_ao5, font="Times, 14")
         lbl_current_ao5.grid(row=2, column=1)
 
         self.var_current_ao12 = tk.DoubleVar(frm_statistics, value="n/a")
-        lbl_current_ao12 = tk.Label(frm_statistics, textvariable=self.var_current_ao12, font="Times, 13")
+        lbl_current_ao12 = tk.Label(frm_statistics, textvariable=self.var_current_ao12, font="Times, 14")
         lbl_current_ao12.grid(row=3, column=1)
 
         self.var_best_time = tk.DoubleVar(frm_statistics, value="n/a")
-        lbl_best_time = tk.Label(frm_statistics, textvariable=self.var_best_time, font="Times, 13")
+        lbl_best_time = tk.Label(frm_statistics, textvariable=self.var_best_time, font="Times, 14")
         lbl_best_time.grid(row=1, column=2)
 
         self.var_best_ao5 = tk.DoubleVar(frm_statistics, value="n/a")
-        lbl_best_ao5 = tk.Label(frm_statistics, textvariable=self.var_best_ao5, font="Times, 13")
+        lbl_best_ao5 = tk.Label(frm_statistics, textvariable=self.var_best_ao5, font="Times, 14")
         lbl_best_ao5.grid(row=2, column=2)
 
         self.var_best_ao12 = tk.DoubleVar(frm_statistics, value="n/a")
-        lbl_best_ao12 = tk.Label(frm_statistics, textvariable=self.var_best_ao12, font="Times, 13")
+        lbl_best_ao12 = tk.Label(frm_statistics, textvariable=self.var_best_ao12, font="Times, 14")
         lbl_best_ao12.grid(row=3, column=2)
 
         # Session mean
         self.var_session_mean = tk.StringVar(frm_left_side, value="n/a")
-        lbl_session_mean = tk.Label(frm_left_side, textvariable=self.var_session_mean, font="Times, 19")
+        lbl_session_mean = tk.Label(frm_left_side, textvariable=self.var_session_mean, font="Times, 20")
 
-        lbl_session_mean.grid(row=2, column=0)
+        lbl_session_mean.grid(row=2, column=0, pady=6)
 
         # Times
         frm_times = tk.Frame(frm_left_side)
@@ -238,7 +244,7 @@ class MainApplication(tk.Frame):
             return
 
         # Update left GUI list
-        tk.Label(self.frm_canvas_frame, text=f"{self.solve_index}. {solve_time}", font="Times, 13") \
+        tk.Label(self.frm_canvas_frame, text=f"{self.solve_index}. {solve_time}", font="Times, 14") \
             .grid(row=self.MAX_SOLVES - self.solve_index, column=0, sticky="W")
         self.solve_index += 1
 
@@ -508,7 +514,7 @@ class MainApplication(tk.Frame):
         # Fill left GUI list
         for solve in session_data.solves:
             tk.Label(self.frm_canvas_frame, text=f"{self.solve_index}. {format_time_seconds(solve)}",
-                     font="Times, 13").grid(row=self.MAX_SOLVES - self.solve_index, column=0, sticky="W")
+                     font="Times, 14").grid(row=self.MAX_SOLVES - self.solve_index, column=0, sticky="W")
             self.solve_index += 1
 
         # Fill statistics
@@ -517,10 +523,12 @@ class MainApplication(tk.Frame):
 
         self.session_data = session_data
 
-    def apply_settings(self, timer_size: int, scramble_size: int, enable_inspection: bool):
+    def apply_settings(self, timer_size: int, scramble_size: int, enable_inspection: bool, background_color: str,
+                       foreground_color: str):
         self.lbl_time.configure(font=f"Times, {timer_size}")
         self.lbl_scramble.configure(font=f"Times, {scramble_size}")
         self.timer.with_inspection = enable_inspection
+        self.root.tk_setPalette(background=background_color, foreground=foreground_color)
 
     # Code copied from the internet and modified
     def kt_is_pressed(self):

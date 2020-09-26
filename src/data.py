@@ -7,7 +7,9 @@ EMPTY_DATA_FILE = {
     "last_session": "",
     "timer_size": 180,
     "scramble_size": 26,
-    "enable_inspection": True
+    "enable_inspection": True,
+    "background_color": [240, 240, 237],
+    "foreground_color": [0, 0, 0]
 }
 
 
