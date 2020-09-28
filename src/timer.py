@@ -50,6 +50,7 @@ class Timer:
 
     def stop(self):
         self._running = False
+        self._inspecting = False
         self._timing_exit_event.set()
         self._reset()
 
@@ -83,7 +84,9 @@ class Timer:
         stop_time = default_timer()
         actual_time = format_time_seconds(stop_time - start_time + 0.05)
         self._variable.set(actual_time)
-        src.globals.can_save_solve_now = True
+        if not src.globals.pressed_escape:
+            src.globals.can_save_solve_now = True
+        src.globals.pressed_escape = False
 
         logging.debug(f"Actual time: {actual_time}")
 

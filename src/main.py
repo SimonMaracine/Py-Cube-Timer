@@ -16,6 +16,7 @@ from src.select_session import SelectSession, Mode
 from src.settings import Settings, get_settings, rgb_to_hex
 from src.data import data_folder_exists, recreate_data_folder
 from src.about import About
+from src.plot import plot
 
 logging.basicConfig(level=logging.DEBUG)
 if not __debug__:
@@ -42,6 +43,7 @@ class MainApplication(tk.Frame):
         men_file = tk.Menu(self)
         men_file.add_command(label="New Session", command=self.new_session)
         men_file.add_command(label="Open Session", command=self.open_session)
+        men_file.add_command(label="See Statistics", command=self.see_statistics)
         men_file.add_command(label="Exit", command=self.exit)
 
         men_edit = tk.Menu(self)
@@ -121,27 +123,27 @@ class MainApplication(tk.Frame):
         lbl_ao12 = tk.Label(frm_statistics, text="ao12", font="Times, 14")
         lbl_ao12.grid(row=3, column=0)
 
-        self.var_current_time = tk.DoubleVar(frm_statistics, value="n/a")
+        self.var_current_time = tk.StringVar(frm_statistics, value="n/a")
         lbl_current_time = tk.Label(frm_statistics, textvariable=self.var_current_time, font="Times, 14")
         lbl_current_time.grid(row=1, column=1)
 
-        self.var_current_ao5 = tk.DoubleVar(frm_statistics, value="n/a")
+        self.var_current_ao5 = tk.StringVar(frm_statistics, value="n/a")
         lbl_current_ao5 = tk.Label(frm_statistics, textvariable=self.var_current_ao5, font="Times, 14")
         lbl_current_ao5.grid(row=2, column=1)
 
-        self.var_current_ao12 = tk.DoubleVar(frm_statistics, value="n/a")
+        self.var_current_ao12 = tk.StringVar(frm_statistics, value="n/a")
         lbl_current_ao12 = tk.Label(frm_statistics, textvariable=self.var_current_ao12, font="Times, 14")
         lbl_current_ao12.grid(row=3, column=1)
 
-        self.var_best_time = tk.DoubleVar(frm_statistics, value="n/a")
+        self.var_best_time = tk.StringVar(frm_statistics, value="n/a")
         lbl_best_time = tk.Label(frm_statistics, textvariable=self.var_best_time, font="Times, 14")
         lbl_best_time.grid(row=1, column=2)
 
-        self.var_best_ao5 = tk.DoubleVar(frm_statistics, value="n/a")
+        self.var_best_ao5 = tk.StringVar(frm_statistics, value="n/a")
         lbl_best_ao5 = tk.Label(frm_statistics, textvariable=self.var_best_ao5, font="Times, 14")
         lbl_best_ao5.grid(row=2, column=2)
 
-        self.var_best_ao12 = tk.DoubleVar(frm_statistics, value="n/a")
+        self.var_best_ao12 = tk.StringVar(frm_statistics, value="n/a")
         lbl_best_ao12 = tk.Label(frm_statistics, textvariable=self.var_best_ao12, font="Times, 14")
         lbl_best_ao12.grid(row=3, column=2)
 
@@ -175,13 +177,14 @@ class MainApplication(tk.Frame):
         self.lbl_time = tk.Label(frm_timer, textvariable=self.var_time, font=f"Times, {timer_size}")
         self.lbl_time.pack()
 
-        self.check_to_save_in_session()
+        self.check_to_save_in_session()  # FIXME I thing I've got some problems
 
         self.timer = Timer(self.var_time)
         self.timer.with_inspection = enable_inspection
         self.root.bind("<KeyPress>", self.kt_report_key_press)
         self.root.bind("<KeyRelease>", self.kt_report_key_release)
         self.root.bind("<Alt-z>", self.on_alt_z_key_press)
+        self.root.bind("<Escape>", self.on_escape_press)
 
         # Flag to handle timer start
         self.stopped_timer = False
@@ -232,6 +235,12 @@ class MainApplication(tk.Frame):
 
     def on_alt_z_key_press(self, event):
         self.remove_last_solve_out_of_session()
+
+    def on_escape_press(self, event):
+        if self.timer.is_running():
+            src.globals.pressed_escape = True
+            self.timer.stop()
+        self.var_time.set("0.00")
 
     def save_solve_in_session(self, solve_time: str):  # solve_time is already formatted
         assert self.session_data is not None
@@ -474,6 +483,9 @@ class MainApplication(tk.Frame):
     def open_session(self):
         top_level = tk.Toplevel(self.root)
         SelectSession(top_level, self.load_session, Mode.OPEN_SESSION)
+
+    def see_statistics(self):
+        plot(self.session_data)
 
     def clear_left_UI(self):
         # Only these must be reset
