@@ -351,6 +351,10 @@ class MainApplication(tk.Frame):
         logging.info(f'Renamed session to "{name}"')
 
     def delete_this_session(self):
+        if self.session_data is None:
+            messagebox.showerror("No Session", "There is no session selected.", parent=self.root)
+            return
+
         if messagebox.askyesno("Delete Session", "Are you sure you want to delete this session?", parent=self.root):
             # Fill session name
             self.var_session_name.set("")
@@ -358,8 +362,23 @@ class MainApplication(tk.Frame):
             # Clear first
             self.clear_left_UI()
 
-            destroy_session(self.session_data.name)
-            self.session_data.name = ""
+            try:
+                destroy_session(self.session_data.name)
+            except FileNotFoundError:
+                messagebox.showerror("Deletion Failure", ("Could not delete this session, "
+                                     "because the file is missing (it's already deleted)."),
+                                     parent=self.root)
+
+            self.session_data = None
+
+            try:
+                remember_last_session("")  # Set last session as nothing
+            except FileNotFoundError:
+                messagebox.showerror("Saving Failure", "Could not remember last session, because the data file is missing.",
+                                     parent=self.root)
+            except ValueError:
+                messagebox.showerror("Saving Failure", "Could not remember last session, because the data file is corrupted.",
+                                     parent=self.root)
 
     def check_to_save_in_session(self):
         if src.globals.can_save_solve_now:
@@ -488,6 +507,14 @@ class MainApplication(tk.Frame):
         SelectSession(top_level, self.load_session, Mode.OPEN_SESSION)
 
     def see_statistics(self):
+        if self.session_data is None:
+            messagebox.showinfo("No Session", "There is no session in use. Please select a session.", parent=self.root)
+            return
+
+        if not self.session_data.solves:
+            messagebox.showinfo("No Solves", "There are no solves in this session.", parent=self.root)
+            return
+
         plot(self.session_data)
 
     def clear_left_UI(self):
@@ -507,7 +534,15 @@ class MainApplication(tk.Frame):
         self.var_time.set("0.00")
 
     def create_session(self, name: str):
-        self.session_data = create_new_session(name)
+        try:
+            self.session_data = create_new_session(name, True)
+        except FileExistsError:
+            if messagebox.askyesno("Session Already Exists", (f'Session "{name}" already exists. '
+                                   "Do you want to overwrite it?"),
+                                   parent=self.root):
+                self.session_data = create_new_session(name, False)
+            else:
+                return
 
         # Fill session name
         self.var_session_name.set(name)

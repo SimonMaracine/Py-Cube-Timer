@@ -30,7 +30,11 @@ class SessionData:
     solves: List[float]  # Solve times can sometimes contain only one decimal
 
 
-def create_new_session(name: str) -> SessionData:
+def create_new_session(name: str, check_first: bool) -> SessionData:
+    if check_first:
+        if isfile(join(_SESSIONS_PATH, name + ".json")):
+            raise FileExistsError
+
     with open(join(_SESSIONS_PATH, name + ".json"), "w") as file:
         data = copy.copy(_EMPTY_SESSION)
         data["name"] = name
@@ -80,6 +84,7 @@ def rename_session(source_name: str, destination_name: str):
         os.rename(source, destination)
     except FileNotFoundError as err:
         logging.error(err)
+        logging.error("Could not rename session")
         raise
 
     with open(destination, "r+") as file:
@@ -93,7 +98,12 @@ def rename_session(source_name: str, destination_name: str):
 
 
 def destroy_session(name: str):
-    os.remove(join(_SESSIONS_PATH, name + ".json"))
+    try:
+        os.remove(join(_SESSIONS_PATH, name + ".json"))
+    except FileNotFoundError as err:
+        logging.error(err)
+        logging.error("Could not remove session")
+        raise
 
 
 def remember_last_session(name: str):
