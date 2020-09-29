@@ -18,7 +18,7 @@ from src.data import data_folder_exists, recreate_data_folder
 from src.about import About
 from src.plot import plot
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.DEBUG, format="%(levelname)s:%(lineno)d:%(message)s")
 if not __debug__:
     logging.disable()
 
@@ -257,7 +257,7 @@ class MainApplication(tk.Frame):
         self.solve_index += 1
 
         if self.solve_index == self.MAX_SOLVES:
-            messagebox.showinfo("Session Ended", ("The maximum amount of solves per session is exceeded."
+            messagebox.showinfo("Session Ended", ("The maximum amount of solves per session has exceeded."
                                 "This session is done."),
                                 parent=self.root)
             return
@@ -298,6 +298,7 @@ class MainApplication(tk.Frame):
 
         # Update left GUI list
         labels = self.frm_canvas_frame.winfo_children()
+        assert labels
         labels[-1].destroy()
         self.solve_index -= 1
 
@@ -324,8 +325,9 @@ class MainApplication(tk.Frame):
         try:
             remove_solve_out_of_session(self.session_data.name + ".json")
         except FileNotFoundError:
-            logging.error("Could not remove the solve in session, because the file is missing")
-            messagebox.showerror("Saving Failure", "Could not remove the solve in session, because the file is missing.",
+            logging.error("Could not remove the solve from the session, because the file is missing")
+            messagebox.showerror("Saving Failure", ("Could not remove the solve from the session, "
+                                 "because the file is missing."),
                                  parent=self.root)
         except ValueError:
             logging.error("Could not remove the solve, because the file is corrupted")
@@ -346,6 +348,7 @@ class MainApplication(tk.Frame):
 
         self.session_data.name = name
         self.var_session_name.set(name)
+        logging.info(f'Renamed session to "{name}"')
 
     def delete_this_session(self):
         if messagebox.askyesno("Delete Session", "Are you sure you want to delete this session?", parent=self.root):
