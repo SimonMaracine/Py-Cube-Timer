@@ -60,20 +60,20 @@ class Settings(tk.Frame):
         self.ent_back_blue = tk.Entry(frm_color, width=4)
         self.ent_back_blue.grid(row=0, column=3)
 
-        self.ent_forg_red = tk.Entry(frm_color, width=4)
-        self.ent_forg_red.grid(row=1, column=1)
-        self.ent_forg_green = tk.Entry(frm_color, width=4)
-        self.ent_forg_green.grid(row=1, column=2)
-        self.ent_forg_blue = tk.Entry(frm_color, width=4)
-        self.ent_forg_blue.grid(row=1, column=3)
+        self.ent_fore_red = tk.Entry(frm_color, width=4)
+        self.ent_fore_red.grid(row=1, column=1)
+        self.ent_fore_green = tk.Entry(frm_color, width=4)
+        self.ent_fore_green.grid(row=1, column=2)
+        self.ent_fore_blue = tk.Entry(frm_color, width=4)
+        self.ent_fore_blue.grid(row=1, column=3)
 
         self.ent_back_red.insert("end", background_color[0])
         self.ent_back_green.insert("end", background_color[1])
         self.ent_back_blue.insert("end", background_color[2])
 
-        self.ent_forg_red.insert("end", foreground_color[0])
-        self.ent_forg_green.insert("end", foreground_color[1])
-        self.ent_forg_blue.insert("end", foreground_color[2])
+        self.ent_fore_red.insert("end", foreground_color[0])
+        self.ent_fore_green.insert("end", foreground_color[1])
+        self.ent_fore_blue.insert("end", foreground_color[2])
 
         # Default background (maybe): 240, 240, 237
 
@@ -99,9 +99,9 @@ class Settings(tk.Frame):
             background_color = (Settings.constrain(self.ent_back_red.get()),
                                 Settings.constrain(self.ent_back_green.get()),
                                 Settings.constrain(self.ent_back_blue.get()))
-            foreground_color = (Settings.constrain(self.ent_forg_red.get()),
-                                Settings.constrain(self.ent_forg_green.get()),
-                                Settings.constrain(self.ent_forg_blue.get()))
+            foreground_color = (Settings.constrain(self.ent_fore_red.get()),
+                                Settings.constrain(self.ent_fore_green.get()),
+                                Settings.constrain(self.ent_fore_blue.get()))
         except ValueError:
             messagebox.showerror("Invalid Color Value", "Please insert color values between 0 and 255.",
                                  parent=self.top_level)
@@ -124,16 +124,16 @@ class Settings(tk.Frame):
             self.ent_back_red.delete(0, "end")
             self.ent_back_green.delete(0, "end")
             self.ent_back_blue.delete(0, "end")
-            self.ent_forg_red.delete(0, "end")
-            self.ent_forg_green.delete(0, "end")
-            self.ent_forg_blue.delete(0, "end")
+            self.ent_fore_red.delete(0, "end")
+            self.ent_fore_green.delete(0, "end")
+            self.ent_fore_blue.delete(0, "end")
 
             self.ent_back_red.insert("end", "240")
             self.ent_back_green.insert("end", "240")
             self.ent_back_blue.insert("end", "237")
-            self.ent_forg_red.insert("end", "0")
-            self.ent_forg_green.insert("end", "0")
-            self.ent_forg_blue.insert("end", "0")
+            self.ent_fore_red.insert("end", "0")
+            self.ent_fore_green.insert("end", "0")
+            self.ent_fore_blue.insert("end", "0")
 
     def write_settings(self, timer_size: int, scramble_size: int, enable_inspection: bool, background_color: tuple,
                        foreground_color: tuple):

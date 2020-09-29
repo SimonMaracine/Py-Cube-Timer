@@ -3,7 +3,7 @@ import json
 from os.path import join, isdir
 
 DATA_PATH = join("data", "data.json")
-EMPTY_DATA_FILE = {
+_EMPTY_DATA_FILE = {
     "last_session": "",
     "timer_size": 180,
     "scramble_size": 26,
@@ -30,4 +30,4 @@ def data_folder_exists() -> bool:
 
 def recreate_data_file():
     with open(DATA_PATH, "w") as file:
-        json.dump(EMPTY_DATA_FILE, file, indent=2)
+        json.dump(_EMPTY_DATA_FILE, file, indent=2)
