@@ -160,17 +160,17 @@ class MainApplication(tk.Frame):
         bar_times = tk.Scrollbar(frm_times, orient="vertical")
         bar_times.pack(side="right", fill="y")
 
-        self.canvas_times = tk.Canvas(frm_times, width=140, borderwidth=0, yscrollcommand=bar_times.set)
-        self.canvas_times.pack(side="left", fill="both", expand=True)
+        self.cvs_times = tk.Canvas(frm_times, width=140, borderwidth=0, yscrollcommand=bar_times.set)
+        self.cvs_times.pack(side="left", fill="both", expand=True)
 
-        bar_times.configure(command=self.canvas_times.yview)
+        bar_times.configure(command=self.cvs_times.yview)
 
         self.frm_canvas_frame = tk.Frame(frm_times)
-        self.canvas_times.create_window((0, 0), window=self.frm_canvas_frame, anchor="nw")
+        self.cvs_times.create_window((0, 0), window=self.frm_canvas_frame, anchor="nw")
         self.frm_canvas_frame.bind("<Configure>", lambda event: self.frame_configure())
 
         self.solve_index = 1
-        self.MAX_SOLVES = 9998
+        self.MAX_SOLVES = 9998  # TODO get rid of this limitation
 
         # Timer area
         self.var_time = tk.StringVar(frm_timer, value="0.00")
@@ -191,8 +191,8 @@ class MainApplication(tk.Frame):
 
         # Variables to fix the key repeating functionality
         # There is still the bug that there are two key presses registered, if holding down a key
-        self.last_press_time = 0
-        self.last_release_time = 0
+        self.last_press_time = 0.0
+        self.last_release_time = 0.0
 
         # Data class to hold a session
         self.session_data: Optional[SessionData] = None
@@ -207,7 +207,7 @@ class MainApplication(tk.Frame):
         self.load_last_session()
 
     def frame_configure(self):
-        self.canvas_times.configure(scrollregion=self.canvas_times.bbox("all"))
+        self.cvs_times.configure(scrollregion=self.cvs_times.bbox("all"))
 
     def on_window_resize(self, event):
         self.lbl_scramble.configure(wraplength=event.width)
