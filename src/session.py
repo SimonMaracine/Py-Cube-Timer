@@ -132,7 +132,8 @@ def get_last_session() -> str:
     try:
         with open(DATA_PATH, "r") as file:
             contents = json.load(file)
-            assert contents["last_session"]
+            if not contents["last_session"]:
+                raise RuntimeError
             return contents["last_session"]
     # Let the caller handle these errors
     except FileNotFoundError:
@@ -143,7 +144,7 @@ def get_last_session() -> str:
         recreate_data_file()
         logging.error("Data file was somehow corrupted")
         raise ValueError
-    except AssertionError:
+    except RuntimeError:
         logging.info("There is no last session")
         raise
     except KeyError as err:
