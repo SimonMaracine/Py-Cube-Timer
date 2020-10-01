@@ -471,7 +471,7 @@ class MainApplication(tk.Frame):
     def load_last_session(self):
         try:
             last_session_name = get_last_session()
-        except AssertionError:  # There was no last session
+        except RuntimeError:  # There was no last session
             logging.info("Please select a session")
             messagebox.showinfo("No Session", "Please select or create a new session to use.", parent=self.root)
             return
