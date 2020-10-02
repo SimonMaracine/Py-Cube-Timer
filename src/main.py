@@ -13,8 +13,9 @@ from src.scramble import generate_scramble
 from src.session import create_new_session, dump_data, SessionData, Solve, remember_last_session, get_last_session, \
     load_session_data, remove_solve_out_of_session, rename_session, destroy_session
 from src.select_session import SelectSession, Mode
-from src.settings import Settings, get_settings, rgb_to_hex
-from src.data import data_folder_exists, recreate_data_folder
+from src.settings import Settings, get_settings
+from src.data import data_folder_exists, recreate_data_folder, DEFAULT_BACKGROUND_COLOR, DEFAULT_TIMER_SIZE, \
+    DEFAULT_SCRAMBLE_SIZE
 from src.about import About
 from src.plot import plot
 
@@ -78,18 +79,18 @@ class MainApplication(tk.Frame):
             timer_size, scramble_size, enable_inspection, background_color, foreground_color = get_settings()
         except FileNotFoundError:
             messagebox.showerror("Data Error", "The data file was missing.", parent=self.root)
-            timer_size = 120; scramble_size = 28; enable_inspection = True
-            background_color = [240, 240, 237]; foreground_color = [0, 0, 0]
+            timer_size = DEFAULT_TIMER_SIZE; scramble_size = DEFAULT_SCRAMBLE_SIZE; enable_inspection = True
+            background_color = DEFAULT_BACKGROUND_COLOR; foreground_color = "#000000"
         except ValueError:
             messagebox.showerror("Data Error", "The data file was corrupted.", parent=self.root)
-            timer_size = 120; scramble_size = 28; enable_inspection = True
-            background_color = [240, 240, 237]; foreground_color = [0, 0, 0]
+            timer_size = DEFAULT_TIMER_SIZE; scramble_size = DEFAULT_SCRAMBLE_SIZE; enable_inspection = True
+            background_color = DEFAULT_BACKGROUND_COLOR; foreground_color = "#000000"
         except KeyError:
             messagebox.showerror("Data Error", "Missing entry in data file.", parent=self.root)
-            timer_size = 120; scramble_size = 28; enable_inspection = True
-            background_color = [240, 240, 237]; foreground_color = [0, 0, 0]
+            timer_size = DEFAULT_TIMER_SIZE; scramble_size = DEFAULT_SCRAMBLE_SIZE; enable_inspection = True
+            background_color = DEFAULT_BACKGROUND_COLOR; foreground_color = "#000000"
 
-        self.root.tk_setPalette(background=rgb_to_hex(background_color), foreground=rgb_to_hex(foreground_color))
+        self.root.tk_setPalette(background=background_color, foreground=foreground_color)
 
         # Scramble area
         self.var_scramble = tk.StringVar(frm_scramble, value=generate_scramble())
@@ -246,8 +247,8 @@ class MainApplication(tk.Frame):
         assert self.session_data is not None
 
         if self.solve_index == self.MAX_SOLVES:
-            messagebox.showerror("Saving Failure", ("Could not save the solve, because the "
-                                 "amount of solves per session was exceeded."),
+            messagebox.showerror("Saving Failure", "Could not save the solve, because the "
+                                 "amount of solves per session was exceeded.",
                                  parent=self.root)
             return
 
@@ -257,8 +258,8 @@ class MainApplication(tk.Frame):
         self.solve_index += 1
 
         if self.solve_index == self.MAX_SOLVES:
-            messagebox.showinfo("Session Ended", ("The maximum amount of solves per session has exceeded."
-                                "This session is done."),
+            messagebox.showinfo("Session Ended", "The maximum amount of solves per session has exceeded."
+                                "This session is done.",
                                 parent=self.root)
             return
 
@@ -326,8 +327,8 @@ class MainApplication(tk.Frame):
             remove_solve_out_of_session(self.session_data.name + ".json")
         except FileNotFoundError:
             logging.error("Could not remove the solve from the session, because the file is missing")
-            messagebox.showerror("Saving Failure", ("Could not remove the solve from the session, "
-                                 "because the file is missing."),
+            messagebox.showerror("Saving Failure", "Could not remove the solve from the session, "
+                                 "because the file is missing.",
                                  parent=self.root)
         except ValueError:
             logging.error("Could not remove the solve, because the file is corrupted")
@@ -365,8 +366,8 @@ class MainApplication(tk.Frame):
             try:
                 destroy_session(self.session_data.name)
             except FileNotFoundError:
-                messagebox.showerror("Deletion Failure", ("Could not delete this session, "
-                                     "because the file is missing (it's already deleted)."),
+                messagebox.showerror("Deletion Failure", "Could not delete this session, "
+                                     "because the file is missing (it's already deleted).",
                                      parent=self.root)
 
             self.session_data = None
@@ -377,7 +378,8 @@ class MainApplication(tk.Frame):
                 messagebox.showerror("Saving Failure", "Could not remember last session, because the data file is missing.",
                                      parent=self.root)
             except ValueError:
-                messagebox.showerror("Saving Failure", "Could not remember last session, because the data file is corrupted.",
+                messagebox.showerror("Saving Failure", "Could not remember last session, "
+                                     "because the data file is corrupted.",
                                      parent=self.root)
 
     def check_to_save_in_session(self):
@@ -537,8 +539,8 @@ class MainApplication(tk.Frame):
         try:
             self.session_data = create_new_session(name, True)
         except FileExistsError:
-            if messagebox.askyesno("Session Already Exists", (f'Session "{name}" already exists. '
-                                   "Do you want to overwrite it?"),
+            if messagebox.askyesno("Session Already Exists", f'Session "{name}" already exists. '
+                                   "Do you want to overwrite it?",
                                    parent=self.root):
                 self.session_data = create_new_session(name, False)
             else:
@@ -554,8 +556,8 @@ class MainApplication(tk.Frame):
         session_data = load_session_data(name + ".json")
         if session_data is None:
             messagebox.showerror("Loading Failure",
-                                 (f'Could not load session "{name}", because either it has missing data, or '
-                                  "it is non-existent, or it is corrupted."), parent=self.root)
+                                 f'Could not load session "{name}", because either it has missing data, or '
+                                 "it is non-existent, or it is corrupted.", parent=self.root)
             return
 
         # Fill session name
@@ -567,7 +569,7 @@ class MainApplication(tk.Frame):
         # Fill left GUI list
         for solve in session_data.solves:
             tk.Label(self.frm_canvas_frame, text=f"{self.solve_index}. {format_time_seconds(solve)}",
-                     font="Times, 14").grid(row=self.MAX_SOLVES - self.solve_index, column=0, sticky="W")
+                     font="Times, 14").grid(row=self.MAX_SOLVES - self.solve_index, column=0, sticky="w")
             self.solve_index += 1
 
         # Fill statistics

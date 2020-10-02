@@ -3,13 +3,17 @@ import json
 from os.path import join, isdir
 
 DATA_PATH = join("data", "data.json")
+DEFAULT_BACKGROUND_COLOR = "#f0f0ed"
+DEFAULT_TIMER_SIZE = 120
+DEFAULT_SCRAMBLE_SIZE = 28
+
 _EMPTY_DATA_FILE = {
     "last_session": "",
-    "timer_size": 180,
-    "scramble_size": 26,
+    "timer_size": DEFAULT_TIMER_SIZE,
+    "scramble_size": DEFAULT_SCRAMBLE_SIZE,
     "enable_inspection": True,
-    "background_color": [240, 240, 237],
-    "foreground_color": [0, 0, 0]
+    "background_color": DEFAULT_BACKGROUND_COLOR,
+    "foreground_color": "#000000"
 }
 
 
