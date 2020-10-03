@@ -3,7 +3,7 @@ import logging
 import tkinter as tk
 from tkinter import messagebox
 from tkinter import colorchooser
-from typing import Callable, Tuple, Union
+from typing import Callable, Tuple
 
 from src.data import DATA_PATH, DEFAULT_BACKGROUND_COLOR, DEFAULT_TIMER_SIZE, DEFAULT_SCRAMBLE_SIZE, recreate_data_file
 

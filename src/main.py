@@ -248,8 +248,7 @@ class MainApplication(tk.Frame):
 
         if self.solve_index == self.MAX_SOLVES:
             messagebox.showerror("Saving Failure", "Could not save the solve, because the "
-                                 "amount of solves per session was exceeded.",
-                                 parent=self.root)
+                                 "amount of solves per session was exceeded.", parent=self.root)
             return
 
         # Update left GUI list
@@ -259,8 +258,7 @@ class MainApplication(tk.Frame):
 
         if self.solve_index == self.MAX_SOLVES:
             messagebox.showinfo("Session Ended", "The maximum amount of solves per session has exceeded."
-                                "This session is done.",
-                                parent=self.root)
+                                "This session is done.", parent=self.root)
             return
 
         # Update list
@@ -328,8 +326,7 @@ class MainApplication(tk.Frame):
         except FileNotFoundError:
             logging.error("Could not remove the solve from the session, because the file is missing")
             messagebox.showerror("Saving Failure", "Could not remove the solve from the session, "
-                                 "because the file is missing.",
-                                 parent=self.root)
+                                 "because the file is missing.", parent=self.root)
         except ValueError:
             logging.error("Could not remove the solve, because the file is corrupted")
             messagebox.showerror("Saving Failure", "Could not remove the solve, because the file is corrupted.",
@@ -367,8 +364,7 @@ class MainApplication(tk.Frame):
                 destroy_session(self.session_data.name)
             except FileNotFoundError:
                 messagebox.showerror("Deletion Failure", "Could not delete this session, "
-                                     "because the file is missing (it's already deleted).",
-                                     parent=self.root)
+                                     "because the file is missing (it's already deleted).", parent=self.root)
 
             self.session_data = None
 
@@ -379,8 +375,7 @@ class MainApplication(tk.Frame):
                                      parent=self.root)
             except ValueError:
                 messagebox.showerror("Saving Failure", "Could not remember last session, "
-                                     "because the data file is corrupted.",
-                                     parent=self.root)
+                                     "because the data file is corrupted.", parent=self.root)
 
     def check_to_save_in_session(self):
         if src.globals.can_save_solve_now:
@@ -540,8 +535,7 @@ class MainApplication(tk.Frame):
             self.session_data = create_new_session(name, True)
         except FileExistsError:
             if messagebox.askyesno("Session Already Exists", f'Session "{name}" already exists. '
-                                   "Do you want to overwrite it?",
-                                   parent=self.root):
+                                   "Do you want to overwrite it?", parent=self.root):
                 self.session_data = create_new_session(name, False)
             else:
                 return
@@ -549,15 +543,13 @@ class MainApplication(tk.Frame):
         # Fill session name
         self.var_session_name.set(name)
 
-        # Clear first
         self.clear_left_UI()
 
     def load_session(self, name: str):
         session_data = load_session_data(name + ".json")
         if session_data is None:
-            messagebox.showerror("Loading Failure",
-                                 f'Could not load session "{name}", because either it has missing data, or '
-                                 "it is non-existent, or it is corrupted.", parent=self.root)
+            messagebox.showerror("Loading Failure", f'Could not load session "{name}", because either it has missing data, '
+                                 "or it is non-existent, or it is corrupted.", parent=self.root)
             return
 
         # Fill session name
@@ -568,8 +560,8 @@ class MainApplication(tk.Frame):
 
         # Fill left GUI list
         for solve in session_data.solves:
-            tk.Label(self.frm_canvas_frame, text=f"{self.solve_index}. {format_time_seconds(solve)}",
-                     font="Times, 14").grid(row=self.MAX_SOLVES - self.solve_index, column=0, sticky="w")
+            tk.Label(self.frm_canvas_frame, text=f"{self.solve_index}. {format_time_seconds(solve)}", font="Times, 14") \
+                .grid(row=self.MAX_SOLVES - self.solve_index, column=0, sticky="w")
             self.solve_index += 1
 
         # Fill statistics
