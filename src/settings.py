@@ -3,6 +3,7 @@ import logging
 import tkinter as tk
 from tkinter import messagebox
 from tkinter import colorchooser
+from tkinter import filedialog
 from typing import Callable, Tuple
 
 from src.data import DATA_PATH, DEFAULT_BACKGROUND_COLOR, DEFAULT_TIMER_SIZE, DEFAULT_SCRAMBLE_SIZE, recreate_data_file
@@ -10,7 +11,7 @@ from src.data import DATA_PATH, DEFAULT_BACKGROUND_COLOR, DEFAULT_TIMER_SIZE, DE
 
 class Settings(tk.Frame):
 
-    def __init__(self, top_level: tk.Toplevel, on_apply: Callable[[int, int, bool, str, str], None]):
+    def __init__(self, top_level: tk.Toplevel, on_apply: Callable[[int, int, bool, str, str, bool, str], None]):
         super().__init__(top_level)
         self.top_level = top_level
         self.on_apply = on_apply
@@ -22,19 +23,23 @@ class Settings(tk.Frame):
         tk.Label(self, text="Scramble size").grid(row=1, column=0, sticky="s")
 
         try:
-            timer_size, scramble_size, enable_inspection, background_color, foreground_color = get_settings()
+            timer_size, scramble_size, enable_inspection, background_color, foreground_color, \
+                    enable_backup, backup_path = get_settings()
         except FileNotFoundError:
             messagebox.showerror("Data Error", "The data file was missing.", parent=self.top_level)
             timer_size = DEFAULT_TIMER_SIZE; scramble_size = DEFAULT_SCRAMBLE_SIZE; enable_inspection = True
             background_color = DEFAULT_BACKGROUND_COLOR; foreground_color = "#000000"
+            enable_backup = False; backup_path = ""
         except json.decoder.JSONDecodeError:
             messagebox.showerror("Data Error", "The data file was corrupted.", parent=self.top_level)
             timer_size = DEFAULT_TIMER_SIZE; scramble_size = DEFAULT_SCRAMBLE_SIZE; enable_inspection = True
             background_color = DEFAULT_BACKGROUND_COLOR; foreground_color = "#000000"
+            enable_backup = False; backup_path = ""
         except KeyError:
             messagebox.showerror("Data Error", "Missing entry in data file.", parent=self.top_level)
             timer_size = DEFAULT_TIMER_SIZE; scramble_size = DEFAULT_SCRAMBLE_SIZE; enable_inspection = True
             background_color = DEFAULT_BACKGROUND_COLOR; foreground_color = "#000000"
+            enable_backup = False; backup_path = ""
 
         self.scl_timer_size = tk.Scale(self, from_=50, to=180, resolution=2, orient="horizontal")
         self.scl_timer_size.grid(row=0, column=1)
@@ -49,24 +54,40 @@ class Settings(tk.Frame):
             .grid(row=3, column=0, columnspan=2, pady=(10, 10))
 
         frm_color = tk.Frame(self)
-        frm_color.grid(row=4, column=0, columnspan=2)
+        frm_color.grid(row=4, column=0, columnspan=2, pady=(0, 14))
 
         tk.Label(frm_color, text="Background color").grid(row=0, column=0, padx=(0, 8))
         tk.Label(frm_color, text="Foreground color").grid(row=1, column=0, padx=(0, 8))
 
         self.var_background_color = tk.StringVar(frm_color, value=background_color)
-        tk.Label(frm_color, textvariable=self.var_background_color).grid(row=0, column=1, padx=(0, 8))
-
         self.var_foreground_color = tk.StringVar(frm_color, value=foreground_color)
-        tk.Label(frm_color, textvariable=self.var_foreground_color).grid(row=1, column=1, padx=(0, 8))
 
-        tk.Button(frm_color, text="Change", command=self.choose_background_color).grid(row=0, column=2)
-        tk.Button(frm_color, text="Change", command=self.choose_foreground_color).grid(row=1, column=2)
+        self.btn_background_color = tk.Button(frm_color, text=self.var_background_color.get(),
+                                              command=self.choose_background_color)
+        self.btn_background_color.grid(row=0, column=1)
+
+        self.btn_foreground_color = tk.Button(frm_color, text=self.var_foreground_color.get(),
+                                              command=self.choose_foreground_color)
+        self.btn_foreground_color.grid(row=1, column=1)
 
         # Default background (maybe): 240, 240, 237
 
+        frm_backup = tk.Frame(self)
+        frm_backup.grid(row=5, column=0, columnspan=2)
+
+        self.var_enable_backup = tk.BooleanVar(frm_backup, value=enable_backup)
+        self.var_backup_path = tk.StringVar(frm_backup, value=backup_path)
+        tk.Checkbutton(frm_backup, text="Enable backup", variable=self.var_enable_backup) \
+            .grid(row=0, column=0, padx=(0, 8))
+
+        backup_path = self.var_backup_path.get()
+        button_text = backup_path if backup_path else "<path>"
+        self.btn_backup_path = tk.Button(frm_backup, text=button_text, command=self.choose_backup_path,
+                                         font="Times, 7", wraplength=120)
+        self.btn_backup_path.grid(row=0, column=1)
+
         frm_buttons = tk.Frame(self)
-        frm_buttons.grid(row=5, column=0, columnspan=2, pady=(12, 0))
+        frm_buttons.grid(row=6, column=0, columnspan=2, pady=(12, 0))
 
         tk.Button(frm_buttons, text="Reset to deafult", command=self.default).grid(row=0, column=0)
         tk.Button(frm_buttons, text="Apply", command=self.apply).grid(row=0, column=1, padx=(6, 0))
@@ -76,11 +97,19 @@ class Settings(tk.Frame):
         color: tuple = colorchooser.askcolor(title="Background Color", parent=self.top_level)
         if color[1] is not None:  # If the user didn't press cancel
             self.var_background_color.set(color[1])
+            self.btn_background_color.configure(text=self.var_background_color.get())
 
     def choose_foreground_color(self):
         color: tuple = colorchooser.askcolor(title="Foreground Color", parent=self.top_level)
         if color[1] is not None:  # If the user didn't press cancel
             self.var_foreground_color.set(color[1])
+            self.btn_foreground_color.configure(text=self.var_foreground_color.get())
+
+    def choose_backup_path(self):
+        directory: str = filedialog.askdirectory(parent=self.top_level)
+        if directory:  # If the user didn't press cancel
+            self.var_backup_path.set(directory)
+            self.btn_backup_path.configure(text=directory)
 
     def apply(self):
         timer_size = self.scl_timer_size.get()
@@ -90,8 +119,13 @@ class Settings(tk.Frame):
         hex_background = self.var_background_color.get()
         hex_foreground = self.var_foreground_color.get()
 
-        self.on_apply(timer_size, scramble_size, enable_inspection, hex_background, hex_foreground)
-        self.write_settings(timer_size, scramble_size, enable_inspection, hex_background, hex_foreground)
+        enable_backup = self.var_enable_backup.get()
+        backup_path = self.var_backup_path.get()
+
+        self.on_apply(timer_size, scramble_size, enable_inspection, hex_background, hex_foreground,
+                      enable_backup, backup_path)
+        self.write_settings(timer_size, scramble_size, enable_inspection, hex_background, hex_foreground,
+                            enable_backup, backup_path)
         self.top_level.destroy()
 
     def default(self):
@@ -103,9 +137,15 @@ class Settings(tk.Frame):
 
             self.var_background_color.set(DEFAULT_BACKGROUND_COLOR)
             self.var_foreground_color.set("#000000")
+            self.btn_background_color.configure(text=DEFAULT_BACKGROUND_COLOR)
+            self.btn_foreground_color.configure(text="#000000")
+
+            self.var_enable_backup.set(False)
+            self.var_backup_path.set("")
+            self.btn_backup_path.configure(text="<path>")
 
     def write_settings(self, timer_size: int, scramble_size: int, enable_inspection: bool, background_color: str,
-                       foreground_color: str):
+                       foreground_color: str, enable_backup: bool, backup_path: str):
         try:
             with open(DATA_PATH, "r+") as file:
                 contents = json.load(file)
@@ -117,6 +157,8 @@ class Settings(tk.Frame):
                 contents["enable_inspection"] = enable_inspection
                 contents["background_color"] = background_color
                 contents["foreground_color"] = foreground_color
+                contents["enable_backup"] = enable_backup
+                contents["backup_path"] = backup_path
 
                 json.dump(contents, file, indent=2)
                 file.truncate()
@@ -130,7 +172,7 @@ class Settings(tk.Frame):
             messagebox.showerror("Data Error", "The data file was corrupted.", parent=self.top_level)
 
 
-def get_settings() -> Tuple[int, int, bool, str, str]:
+def get_settings() -> Tuple[int, int, bool, str, str, bool, str]:
     try:
         with open(DATA_PATH, "r") as file:
             contents = json.load(file)
@@ -145,7 +187,7 @@ def get_settings() -> Tuple[int, int, bool, str, str]:
 
     try:
         return contents["timer_size"], contents["scramble_size"], contents["enable_inspection"], \
-               contents["background_color"], contents["foreground_color"]
+            contents["background_color"], contents["foreground_color"], contents["enable_backup"], contents["backup_path"]
     except KeyError as err:
         recreate_data_file()
         logging.error(f"Missing entry: {err}")

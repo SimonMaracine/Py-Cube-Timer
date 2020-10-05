@@ -1,8 +1,10 @@
 {
-  "last_session": "Simon2",
+  "last_session": "Simon",
   "timer_size": 120,
   "scramble_size": 28,
   "enable_inspection": true,
-  "background_color": "#f0c9ed",
-  "foreground_color": "#000000"
+  "background_color": "#f0f0ed",
+  "foreground_color": "#000000",
+  "enable_backup": true,
+  "backup_path": "/home/simon/PROJECTS/Py-Cube-Timer/src"
 }

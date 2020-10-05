@@ -13,7 +13,9 @@ _EMPTY_DATA_FILE = {
     "scramble_size": DEFAULT_SCRAMBLE_SIZE,
     "enable_inspection": True,
     "background_color": DEFAULT_BACKGROUND_COLOR,
-    "foreground_color": "#000000"
+    "foreground_color": "#000000",
+    "enable_backup": False,
+    "backup_path": ""
 }
 
 
