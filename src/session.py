@@ -3,6 +3,8 @@ import dataclasses
 import logging
 import copy
 import os
+import shutil
+import datetime
 from os.path import join, isfile
 from typing import List, Optional
 
@@ -179,3 +181,11 @@ def load_session_data(file_name: str) -> Optional[SessionData]:
 
 def session_exists(name: str) -> bool:
     return isfile(join(_SESSIONS_PATH, name + ".json"))
+
+
+def backup_session(session_file: str, folder_path: str):
+    date = datetime.datetime.now().date()
+
+    source = join(_SESSIONS_PATH, session_file)
+    destination = join(folder_path, "backup_" + f"{date.year}-{date.month}" + "_" + session_file)
+    shutil.copyfile(source, destination)

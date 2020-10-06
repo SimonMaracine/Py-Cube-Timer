@@ -11,7 +11,7 @@ import src.globals
 from src.timer import Timer, interpret_time_in_seconds, format_time_seconds
 from src.scramble import generate_scramble
 from src.session import create_new_session, dump_data, SessionData, Solve, remember_last_session, get_last_session, \
-    load_session_data, remove_solve_out_of_session, rename_session, destroy_session
+    load_session_data, remove_solve_out_of_session, rename_session, destroy_session, backup_session
 from src.select_session import SelectSession, Mode
 from src.settings import Settings, get_settings
 from src.data import data_folder_exists, recreate_data_folder, DEFAULT_BACKGROUND_COLOR, DEFAULT_TIMER_SIZE, \
@@ -291,6 +291,15 @@ class MainApplication(tk.Frame):
 
         # Generate new scramble
         self.var_scramble.set(generate_scramble())
+
+        # Backup the session
+        if self.enable_backup:
+            if len(self.session_data.solves) % 5 == 0:  # Magic number :O
+                if self.backup_path:
+                    backup_session(self.session_data.name + ".json", self.backup_path)
+                else:  # The string was empty
+                    messagebox.showerror("No Backup Folder", "Couldn't backup the session, because "
+                                         "the path is not specified.", parent=self.root)
 
     def remove_last_solve_out_of_session(self):
         assert self.session_data is not None
