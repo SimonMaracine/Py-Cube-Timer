@@ -6,6 +6,7 @@ from tkinter import colorchooser
 from tkinter import filedialog
 from typing import Callable, Tuple
 
+from src.session import FileCorruptedError
 from src.data import DATA_PATH, DEFAULT_BACKGROUND_COLOR, DEFAULT_TIMER_SIZE, DEFAULT_SCRAMBLE_SIZE, recreate_data_file
 
 
@@ -30,7 +31,7 @@ class Settings(tk.Frame):
             timer_size = DEFAULT_TIMER_SIZE; scramble_size = DEFAULT_SCRAMBLE_SIZE; enable_inspection = True
             background_color = DEFAULT_BACKGROUND_COLOR; foreground_color = "#000000"
             enable_backup = False; backup_path = ""
-        except json.decoder.JSONDecodeError:
+        except FileCorruptedError:
             messagebox.showerror("Data Error", "The data file was corrupted.", parent=self.top_level)
             timer_size = DEFAULT_TIMER_SIZE; scramble_size = DEFAULT_SCRAMBLE_SIZE; enable_inspection = True
             background_color = DEFAULT_BACKGROUND_COLOR; foreground_color = "#000000"
@@ -163,12 +164,12 @@ class Settings(tk.Frame):
                 json.dump(contents, file, indent=2)
                 file.truncate()
         except FileNotFoundError:
-            recreate_data_file()
             logging.error("Data file was missing")
+            recreate_data_file()
             messagebox.showerror("Data Error", "The data file was missing.", parent=self.top_level)
         except json.decoder.JSONDecodeError:
-            recreate_data_file()
             logging.error("Data file was somehow corrupted")
+            recreate_data_file()
             messagebox.showerror("Data Error", "The data file was corrupted.", parent=self.top_level)
 
 
@@ -177,18 +178,18 @@ def get_settings() -> Tuple[int, int, bool, str, str, bool, str]:
         with open(DATA_PATH, "r") as file:
             contents = json.load(file)
     except FileNotFoundError:
-        recreate_data_file()
         logging.error("Data file was missing")
+        recreate_data_file()
         raise
     except json.decoder.JSONDecodeError:
-        recreate_data_file()
         logging.error("Data file was somehow corrupted")
-        raise
+        recreate_data_file()
+        raise FileCorruptedError
 
     try:
         return contents["timer_size"], contents["scramble_size"], contents["enable_inspection"], \
             contents["background_color"], contents["foreground_color"], contents["enable_backup"], contents["backup_path"]
     except KeyError as err:
-        recreate_data_file()
         logging.error(f"Missing entry: {err}")
+        recreate_data_file()
         raise

@@ -11,7 +11,8 @@ import src.globals
 from src.timer import Timer, interpret_time_in_seconds, format_time_seconds
 from src.scramble import generate_scramble
 from src.session import create_new_session, dump_data, SessionData, Solve, remember_last_session, get_last_session, \
-    load_session_data, remove_solve_out_of_session, rename_session, destroy_session, backup_session
+    load_session_data, remove_solve_out_of_session, rename_session, destroy_session, backup_session, \
+    FileCorruptedError, SameFileError
 from src.select_session import SelectSession, Mode
 from src.settings import Settings, get_settings
 from src.data import data_folder_exists, recreate_data_folder, DEFAULT_BACKGROUND_COLOR, DEFAULT_TIMER_SIZE, \
@@ -83,7 +84,7 @@ class MainApplication(tk.Frame):
             timer_size = DEFAULT_TIMER_SIZE; scramble_size = DEFAULT_SCRAMBLE_SIZE; enable_inspection = True
             background_color = DEFAULT_BACKGROUND_COLOR; foreground_color = "#000000"
             enable_backup = False; backup_path = ""
-        except ValueError:
+        except FileCorruptedError:
             messagebox.showerror("Data Error", "The data file was corrupted.", parent=self.root)
             timer_size = DEFAULT_TIMER_SIZE; scramble_size = DEFAULT_SCRAMBLE_SIZE; enable_inspection = True
             background_color = DEFAULT_BACKGROUND_COLOR; foreground_color = "#000000"
@@ -282,7 +283,7 @@ class MainApplication(tk.Frame):
             logging.error("Could not save the solve in session, because the file is missing")
             messagebox.showerror("Saving Failure", "Could not save the solve in session, because the file is missing.",
                                  parent=self.root)
-        except ValueError:
+        except FileCorruptedError:
             logging.error("Could not save the solve, because the file is corrupted")
             messagebox.showerror("Saving Failure", "Could not save the solve, because the file is corrupted.",
                                  parent=self.root)
@@ -296,7 +297,24 @@ class MainApplication(tk.Frame):
         if self.enable_backup:
             if len(self.session_data.solves) % 5 == 0:  # Magic number :O
                 if self.backup_path:
-                    backup_session(self.session_data.name + ".json", self.backup_path)
+                    try:
+                        backup_session(self.session_data.name + ".json", self.backup_path)
+                    except FileNotFoundError:
+                        messagebox.showerror("Backup Failure", "Could not backup the session, because the session file "
+                                             "is missing.",
+                                             parent=self.root)
+                        return
+                    except SameFileError:
+                        messagebox.showerror("Backup Failure", "Could not backup the session, because the backup folder "
+                                             "is the sessions folder.",  # TODO maybe avoid this completely
+                                             parent=self.root)
+                        return
+                    except OSError:
+                        messagebox.showerror("Backup Failure", "Could not backup the session, because the backup folder "
+                                             "is not writable (permission denied).",
+                                             parent=self.root)
+                        return
+                    logging.info(f"Session backed up in {self.backup_path}")
                 else:  # The string was empty
                     messagebox.showerror("No Backup Folder", "Couldn't backup the session, because "
                                          "the path is not specified.", parent=self.root)
@@ -344,7 +362,7 @@ class MainApplication(tk.Frame):
             logging.error("Could not remove the solve from the session, because the file is missing")
             messagebox.showerror("Saving Failure", "Could not remove the solve from the session, "
                                  "because the file is missing.", parent=self.root)
-        except ValueError:
+        except FileCorruptedError:
             logging.error("Could not remove the solve, because the file is corrupted")
             messagebox.showerror("Saving Failure", "Could not remove the solve, because the file is corrupted.",
                                  parent=self.root)
@@ -390,7 +408,7 @@ class MainApplication(tk.Frame):
             except FileNotFoundError:
                 messagebox.showerror("Saving Failure", "Could not remember last session, because the data file is missing.",
                                      parent=self.root)
-            except ValueError:
+            except FileCorruptedError:
                 messagebox.showerror("Saving Failure", "Could not remember last session, "
                                      "because the data file is corrupted.", parent=self.root)
 
@@ -411,7 +429,7 @@ class MainApplication(tk.Frame):
         except FileNotFoundError:
             messagebox.showerror("Saving Failure", "Could not remember last session, because the data file is missing.",
                                  parent=self.root)
-        except ValueError:
+        except FileCorruptedError:
             messagebox.showerror("Saving Failure", "Could not remember last session, because the data file is corrupted.",
                                  parent=self.root)
         else:
@@ -489,7 +507,7 @@ class MainApplication(tk.Frame):
             logging.info("Please select a session")
             messagebox.showinfo("No Session", "Please select or create a new session to use.", parent=self.root)
             return
-        except ValueError:
+        except FileCorruptedError:
             messagebox.showerror("Data Error", "The data file was corrupted.", parent=self.root)
             messagebox.showinfo("No Session", "Please select or create a new session to use.", parent=self.root)
             return

@@ -32,6 +32,14 @@ class SessionData:
     solves: List[float]  # Solve times can sometimes contain only one decimal
 
 
+class FileCorruptedError(json.decoder.JSONDecodeError):
+    pass
+
+
+class SameFileError(shutil.SameFileError):
+    pass
+
+
 def create_new_session(name: str, check_first: bool) -> SessionData:
     if check_first:
         if isfile(join(_SESSIONS_PATH, name + ".json")):
@@ -51,7 +59,7 @@ def dump_data(file_name: str, solve: Solve):
             contents = json.load(file)
         except json.decoder.JSONDecodeError:
             logging.error(f'File "{file_name}" is corrupted')
-            raise ValueError  # Let the caller handle this error
+            raise FileCorruptedError  # Let the caller handle this error
 
         file.seek(0)
 
@@ -66,8 +74,8 @@ def remove_solve_out_of_session(file_name: str):
         try:
             contents = json.load(file)
         except json.decoder.JSONDecodeError:
-            logging.error(f"File '{file_name}' is corrupted")
-            raise ValueError  # Let the caller handle this error
+            logging.error(f'File "{file_name}" is corrupted')
+            raise FileCorruptedError  # Let the caller handle this error
 
         file.seek(0)
 
@@ -84,9 +92,8 @@ def rename_session(source_name: str, destination_name: str):
 
     try:
         os.rename(source, destination)
-    except FileNotFoundError as err:
-        logging.error(err)
-        logging.error("Could not rename session")
+    except FileNotFoundError:
+        logging.error(f"Could not rename session; file {source} not found")
         raise
 
     with open(destination, "r+") as file:
@@ -102,9 +109,8 @@ def rename_session(source_name: str, destination_name: str):
 def destroy_session(name: str):
     try:
         os.remove(join(_SESSIONS_PATH, name + ".json"))
-    except FileNotFoundError as err:
-        logging.error(err)
-        logging.error("Could not remove session")
+    except FileNotFoundError:
+        logging.error(f"Could not remove session; file {name}.json not found")
         raise
 
 
@@ -121,13 +127,13 @@ def remember_last_session(name: str):
             file.truncate()
     # Let the caller handle these errors
     except FileNotFoundError:
-        recreate_data_file()
         logging.error("Data file was missing")
+        recreate_data_file()
         raise
     except json.decoder.JSONDecodeError:
-        recreate_data_file()
         logging.error("Data file was somehow corrupted")
-        raise ValueError
+        recreate_data_file()
+        raise FileCorruptedError
 
 
 def get_last_session() -> str:
@@ -139,19 +145,19 @@ def get_last_session() -> str:
             return contents["last_session"]
     # Let the caller handle these errors
     except FileNotFoundError:
-        recreate_data_file()
         logging.error("Data file was missing")
+        recreate_data_file()
         raise
     except json.decoder.JSONDecodeError:
-        recreate_data_file()
         logging.error("Data file was somehow corrupted")
-        raise ValueError
+        recreate_data_file()
+        raise FileCorruptedError
     except RuntimeError:
         logging.info("There is no last session")
         raise
     except KeyError as err:
-        recreate_data_file()
         logging.error(f"Missing entry: {err}")
+        recreate_data_file()
         raise
 
 
@@ -159,11 +165,11 @@ def load_session_data(file_name: str) -> Optional[SessionData]:
     try:
         with open(join(_SESSIONS_PATH, file_name), "r") as file:
             contents = json.load(file)
-    except FileNotFoundError as err:
-        logging.error(err)
+    except FileNotFoundError:
+        logging.error(f"Could not find file {file_name}")
         return None
-    except json.decoder.JSONDecodeError as err:
-        logging.error(err)
+    except json.decoder.JSONDecodeError:
+        logging.error(f"{file_name} is corrupted")
         return None
 
     try:
@@ -188,4 +194,15 @@ def backup_session(session_file: str, folder_path: str):
 
     source = join(_SESSIONS_PATH, session_file)
     destination = join(folder_path, "backup_" + f"{date.year}-{date.month}" + "_" + session_file)
-    shutil.copyfile(source, destination)
+
+    try:
+        shutil.copyfile(source, destination)
+    except FileNotFoundError:
+        logging.error(f"Could not find file {source}")
+        raise
+    except shutil.SameFileError:  # TODO maybe we should prevent this completely instead of catching it
+        logging.error(f"Cannot backup in the sessions folder")
+        raise SameFileError
+    except OSError:
+        logging.error(f"Could not backup file {source}, because the destination is not writable (permission denied)")
+        raise
