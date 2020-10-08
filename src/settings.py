@@ -23,24 +23,29 @@ class Settings(tk.Frame):
         tk.Label(self, text="Timer size").grid(row=0, column=0, sticky="s")
         tk.Label(self, text="Scramble size").grid(row=1, column=0, sticky="s")
 
+        error = False
+
         try:
             timer_size, scramble_size, enable_inspection, background_color, foreground_color, \
                     enable_backup, backup_path = get_settings()
         except FileNotFoundError:
             messagebox.showerror("Data Error", "The data file was missing.", parent=self.top_level)
-            timer_size = DEFAULT_TIMER_SIZE; scramble_size = DEFAULT_SCRAMBLE_SIZE; enable_inspection = True
-            background_color = DEFAULT_BACKGROUND_COLOR; foreground_color = "#000000"
-            enable_backup = False; backup_path = ""
+            error = True
         except FileCorruptedError:
             messagebox.showerror("Data Error", "The data file was corrupted.", parent=self.top_level)
-            timer_size = DEFAULT_TIMER_SIZE; scramble_size = DEFAULT_SCRAMBLE_SIZE; enable_inspection = True
-            background_color = DEFAULT_BACKGROUND_COLOR; foreground_color = "#000000"
-            enable_backup = False; backup_path = ""
+            error = True
         except KeyError:
             messagebox.showerror("Data Error", "Missing entry in data file.", parent=self.top_level)
-            timer_size = DEFAULT_TIMER_SIZE; scramble_size = DEFAULT_SCRAMBLE_SIZE; enable_inspection = True
-            background_color = DEFAULT_BACKGROUND_COLOR; foreground_color = "#000000"
-            enable_backup = False; backup_path = ""
+            error = True
+
+        if error:
+            timer_size = DEFAULT_TIMER_SIZE
+            scramble_size = DEFAULT_SCRAMBLE_SIZE
+            enable_inspection = True
+            background_color = DEFAULT_BACKGROUND_COLOR
+            foreground_color = "#000000"
+            enable_backup = False
+            backup_path = ""
 
         self.scl_timer_size = tk.Scale(self, from_=50, to=180, resolution=2, orient="horizontal")
         self.scl_timer_size.grid(row=0, column=1)

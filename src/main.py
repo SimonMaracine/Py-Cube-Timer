@@ -76,24 +76,29 @@ class MainApplication(tk.Frame):
         frm_timer.grid(row=1, column=1)
 
         # Get settings from data
+        error = False
+
         try:
             timer_size, scramble_size, enable_inspection, background_color, foreground_color, \
                 enable_backup, backup_path = get_settings()
         except FileNotFoundError:
             messagebox.showerror("Data Error", "The data file was missing.", parent=self.root)
-            timer_size = DEFAULT_TIMER_SIZE; scramble_size = DEFAULT_SCRAMBLE_SIZE; enable_inspection = True
-            background_color = DEFAULT_BACKGROUND_COLOR; foreground_color = "#000000"
-            enable_backup = False; backup_path = ""
+            error = True
         except FileCorruptedError:
             messagebox.showerror("Data Error", "The data file was corrupted.", parent=self.root)
-            timer_size = DEFAULT_TIMER_SIZE; scramble_size = DEFAULT_SCRAMBLE_SIZE; enable_inspection = True
-            background_color = DEFAULT_BACKGROUND_COLOR; foreground_color = "#000000"
-            enable_backup = False; backup_path = ""
+            error = True
         except KeyError:
             messagebox.showerror("Data Error", "Missing entry in data file.", parent=self.root)
-            timer_size = DEFAULT_TIMER_SIZE; scramble_size = DEFAULT_SCRAMBLE_SIZE; enable_inspection = True
-            background_color = DEFAULT_BACKGROUND_COLOR; foreground_color = "#000000"
-            enable_backup = False; backup_path = ""
+            error = True
+
+        if error:
+            timer_size = DEFAULT_TIMER_SIZE
+            scramble_size = DEFAULT_SCRAMBLE_SIZE
+            enable_inspection = True
+            background_color = DEFAULT_BACKGROUND_COLOR
+            foreground_color = "#000000"
+            enable_backup = False
+            backup_path = ""
 
         self.root.tk_setPalette(background=background_color, foreground=foreground_color)
 
