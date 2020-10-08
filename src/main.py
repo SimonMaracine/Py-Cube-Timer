@@ -235,11 +235,11 @@ class MainApplication(tk.Frame):
             logging.debug("Timer STOP")
 
     def on_key_release(self, event):
-        if self.session_data is None:
-            messagebox.showerror("No Session", "Please select or create a new session to use the timer.", parent=self.root)
-            return
-
         if event.char == " ":
+            if self.session_data is None:
+                messagebox.showerror("No Session", "Please select or create a new session to use the timer.",
+                                     parent=self.root)
+                return
             if not self.stopped_timer:
                 if not self.timer.is_running() or self.timer.is_inspecting():
                     self.timer.start()
