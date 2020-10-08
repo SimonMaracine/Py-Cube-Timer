@@ -10,5 +10,5 @@ Py-Cube-Timer is a tool for timing your Rubik's Cube solves. It has the followin
 - Shows a graph of your session
 - And most importantly - it's written in Python :)
 
-Py-Cube-Timer is heavily inspired by csTimer, a.k.a probably the best timer ever.  
+Py-Cube-Timer is heavily inspired by csTimer, a.k.a. probably the best timer ever.  
 If you don't like it, then just use [csTimer](https://cstimer.net/). What can I say?
