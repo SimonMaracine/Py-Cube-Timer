@@ -495,6 +495,7 @@ class MainApplication(tk.Frame):
 
             best_ao5 = min(averages)
             self.var_best_ao5.set(format_time_seconds(best_ao5))
+            session_data.all_ao5 = averages  # Write to session data
 
         if len(ao12_list) >= 12:
             averages = []
@@ -504,6 +505,7 @@ class MainApplication(tk.Frame):
 
             best_ao12 = min(averages)
             self.var_best_ao12.set(format_time_seconds(best_ao12))
+            session_data.all_ao12 = averages  # Write to session data
 
     def load_last_session(self):
         try:

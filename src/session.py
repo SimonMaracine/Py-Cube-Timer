@@ -30,6 +30,8 @@ class Solve:
 class SessionData:
     name: str
     solves: List[float]  # Solve times can sometimes contain only one decimal
+    all_ao5: List[float]
+    all_ao12: List[float]
 
 
 class FileCorruptedError(json.decoder.JSONDecodeError):
@@ -50,7 +52,7 @@ def create_new_session(name: str, check_first: bool) -> SessionData:
         data["name"] = name
         json.dump(data, file, indent=2)
 
-    return SessionData(name, [])
+    return SessionData(name, [], [], [])
 
 
 def dump_data(file_name: str, solve: Solve):
@@ -182,7 +184,7 @@ def load_session_data(file_name: str) -> Optional[SessionData]:
         logging.error(f"Missing entry: {err}")
         return None
     else:
-        return SessionData(name, solves)
+        return SessionData(name, solves, [], [])
 
 
 def session_exists(name: str) -> bool:
