@@ -8,7 +8,7 @@ def plot(session_data: SessionData):
 
     solve_indices = [i for i in range(len(session_data.solves))]
     times = session_data.solves
-    plt.plot(solve_indices, times, label="Singles", color="gray")
+    plt.plot(solve_indices, times, label="single", color="gray")
 
     ao5 = session_data.all_ao5
     if ao5:  # If it's not empty

@@ -7,6 +7,9 @@ from timeit import default_timer
 
 import src.globals
 
+DEFAULT_READY_COLOR = "green"
+DEFAULT_INSPECTION_COLOR = "red"
+
 
 class Timer:
 

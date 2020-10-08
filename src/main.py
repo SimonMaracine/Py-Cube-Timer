@@ -8,7 +8,7 @@ from tkinter import messagebox
 from typing import Optional
 
 import src.globals
-from src.timer import Timer, interpret_time_in_seconds, format_time_seconds
+from src.timer import Timer, interpret_time_in_seconds, format_time_seconds, DEFAULT_READY_COLOR, DEFAULT_INSPECTION_COLOR
 from src.scramble import generate_scramble
 from src.session import create_new_session, dump_data, SessionData, Solve, remember_last_session, get_last_session, \
     load_session_data, remove_solve_out_of_session, rename_session, destroy_session, backup_session, \
@@ -80,7 +80,7 @@ class MainApplication(tk.Frame):
 
         try:
             timer_size, scramble_size, enable_inspection, background_color, foreground_color, \
-                enable_backup, backup_path = get_settings()
+                enable_backup, backup_path, ready_color, inspection_color = get_settings()
         except FileNotFoundError:
             messagebox.showerror("Data Error", "The data file was missing.", parent=self.root)
             error = True
@@ -99,6 +99,8 @@ class MainApplication(tk.Frame):
             foreground_color = "#000000"
             enable_backup = False
             backup_path = ""
+            ready_color = DEFAULT_READY_COLOR
+            inspection_color = DEFAULT_INSPECTION_COLOR
 
         self.root.tk_setPalette(background=background_color, foreground=foreground_color)
 
@@ -197,6 +199,9 @@ class MainApplication(tk.Frame):
         self.root.bind("<Alt-z>", self.on_alt_z_key_press)
         self.root.bind("<Escape>", self.on_escape_press)
 
+        self.timer_ready_color = ready_color
+        self.timer_inspection_color = inspection_color
+
         # Flag to handle timer start
         self.stopped_timer = False
 
@@ -234,6 +239,12 @@ class MainApplication(tk.Frame):
 
             logging.debug("Timer STOP")
 
+        if not self.timer.is_running() or self.timer.is_inspecting():
+            if event.char == " ":
+                if self.session_data is not None:
+                    if not self.stopped_timer:
+                        self.change_timer_color(self.timer_ready_color)
+
     def on_key_release(self, event):
         if event.char == " ":
             if self.session_data is None:
@@ -241,9 +252,16 @@ class MainApplication(tk.Frame):
                                      parent=self.root)
                 return
             if not self.stopped_timer:
-                if not self.timer.is_running() or self.timer.is_inspecting():
+                if not self.timer.is_running():  # TODO check for errors
                     self.timer.start()
-
+                    if self.timer.with_inspection:  # This is to handle the case when there is no inspection
+                        self.change_timer_color(self.timer_inspection_color)
+                    else:
+                        self.change_timer_color("black")
+                    logging.debug("Timer START")
+                elif self.timer.is_inspecting():
+                    self.timer.start()
+                    self.change_timer_color("black")
                     logging.debug("Timer START")
             else:
                 self.stopped_timer = False
@@ -256,6 +274,9 @@ class MainApplication(tk.Frame):
             src.globals.pressed_escape = True
             self.timer.stop()
         self.var_time.set("0.00")
+
+    def change_timer_color(self, color: str):
+        self.lbl_time.configure(foreground=color)
 
     def save_solve_in_session(self, solve_time: str):  # solve_time is already formatted
         assert self.session_data is not None
@@ -613,13 +634,16 @@ class MainApplication(tk.Frame):
         self.session_data = session_data
 
     def apply_settings(self, timer_size: int, scramble_size: int, enable_inspection: bool, background_color: str,
-                       foreground_color: str, enable_backup: bool, backup_path: str):
+                       foreground_color: str, enable_backup: bool, backup_path: str, ready_color: str,
+                       inspection_color: str):
         self.lbl_time.configure(font=f"Times, {timer_size}")
         self.lbl_scramble.configure(font=f"Times, {scramble_size}")
         self.timer.with_inspection = enable_inspection
         self.root.tk_setPalette(background=background_color, foreground=foreground_color)
         self.enable_backup = enable_backup
         self.backup_path = backup_path
+        self.timer_ready_color = ready_color
+        self.timer_inspection_color = inspection_color
 
     # Code copied from the internet and modified
     def kt_is_pressed(self):

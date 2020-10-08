@@ -2,6 +2,8 @@ import os
 import json
 from os.path import join, isdir
 
+from src.timer import DEFAULT_READY_COLOR, DEFAULT_INSPECTION_COLOR
+
 DATA_PATH = join("data", "data.json")
 DEFAULT_BACKGROUND_COLOR = "#f0f0ed"
 DEFAULT_TIMER_SIZE = 120
@@ -15,7 +17,9 @@ _EMPTY_DATA_FILE = {
     "background_color": DEFAULT_BACKGROUND_COLOR,
     "foreground_color": "#000000",
     "enable_backup": False,
-    "backup_path": ""
+    "backup_path": "",
+    "ready_color": DEFAULT_READY_COLOR,
+    "inspection_color": DEFAULT_INSPECTION_COLOR
 }
 
 
