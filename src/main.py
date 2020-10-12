@@ -79,7 +79,7 @@ class MainApplication(tk.Frame):
         error = False
 
         try:
-            timer_size, scramble_size, enable_inspection, background_color, foreground_color, \
+            timer_size, scramble_size, enable_inspection, background_color, self.foreground_color, \
                 enable_backup, backup_path, ready_color, inspection_color = get_settings()
         except FileNotFoundError:
             messagebox.showerror("Data Error", "The data file was missing.", parent=self.root)
@@ -96,13 +96,13 @@ class MainApplication(tk.Frame):
             scramble_size = DEFAULT_SCRAMBLE_SIZE
             enable_inspection = True
             background_color = DEFAULT_BACKGROUND_COLOR
-            foreground_color = "#000000"
+            self.foreground_color = "#000000"
             enable_backup = False
             backup_path = ""
             ready_color = DEFAULT_READY_COLOR
             inspection_color = DEFAULT_INSPECTION_COLOR
 
-        self.root.tk_setPalette(background=background_color, foreground=foreground_color)
+        self.root.tk_setPalette(background=background_color, foreground=self.foreground_color)
 
         # Scramble area
         self.var_scramble = tk.StringVar(frm_scramble, value=generate_scramble())
@@ -257,11 +257,11 @@ class MainApplication(tk.Frame):
                     if self.timer.with_inspection:  # This is to handle the case when there is no inspection
                         self.change_timer_color(self.timer_inspection_color)
                     else:
-                        self.change_timer_color("black")
+                        self.change_timer_color(self.foreground_color)
                     logging.debug("Timer START")
                 elif self.timer.is_inspecting():
                     self.timer.start()
-                    self.change_timer_color("black")
+                    self.change_timer_color(self.foreground_color)
                     logging.debug("Timer START")
             else:
                 self.stopped_timer = False
