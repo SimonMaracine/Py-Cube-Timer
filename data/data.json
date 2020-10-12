@@ -1,7 +1,7 @@
 {
-  "last_session": "Simon",
-  "timer_size": 180,
-  "scramble_size": 50,
+  "last_session": "test",
+  "timer_size": 120,
+  "scramble_size": 28,
   "enable_inspection": true,
   "background_color": "#f0f0ed",
   "foreground_color": "#000000",
