@@ -183,7 +183,10 @@ class MainApplication(tk.Frame):
         self.frm_canvas_frame.bind("<Configure>", lambda event: self.frame_configure())
 
         self.solve_index = 1
-        self.MAX_SOLVES = 9998  # TODO get rid of this limitation
+        self.MAX_SOLVES = 9997  # TODO get rid of this limitation
+        self.solves_loaded = 0
+        self.SOLVE_INDEX_ON_LOAD = 0
+        self.btn_more = None
 
         # Timer area
         self.var_time = tk.StringVar(frm_timer, value="0.00")
@@ -621,10 +624,21 @@ class MainApplication(tk.Frame):
         # Clear first
         self.clear_left_UI()
 
+        session_data.solves = [i + 1 for i in range(400)]
+
+        self.solve_index = len(session_data.solves) - 40 + 1
+        self.SOLVE_INDEX_ON_LOAD = self.solve_index
+        self.solves_loaded = 40
+
+        if self.solve_index > 40:
+            self.btn_more = tk.Button(self.frm_canvas_frame, text="More", command=self.load_more_solves)
+            self.btn_more.grid(row=self.MAX_SOLVES + 1, column=0)
+
         # Fill left GUI list
-        for solve in session_data.solves:
+        for solve in session_data.solves[-40:]:
             tk.Label(self.frm_canvas_frame, text=f"{self.solve_index}. {format_time_seconds(solve)}", font="Times, 14") \
-                .grid(row=self.MAX_SOLVES - self.solve_index, column=0, sticky="w")
+                .grid(row=self.MAX_SOLVES - self.solve_index, column=0, sticky="W")
+
             self.solve_index += 1
 
         # Fill statistics
@@ -632,6 +646,20 @@ class MainApplication(tk.Frame):
             self.update_statistics(session_data)
 
         self.session_data = session_data
+
+    def load_more_solves(self):
+        solve_index = self.SOLVE_INDEX_ON_LOAD - self.solves_loaded - 1
+
+        for solve in reversed(self.session_data.solves[-self.solves_loaded - 40:-self.solves_loaded]):
+            tk.Label(self.frm_canvas_frame, text=f"{solve_index}. {format_time_seconds(solve)}", font="Times, 14") \
+                .grid(row=self.MAX_SOLVES - solve_index, column=0, sticky="W")
+
+            solve_index -= 1
+
+        self.solves_loaded += 40
+
+        if self.solves_loaded == self.SOLVE_INDEX_ON_LOAD:
+            self.btn_more.destroy()
 
     def apply_settings(self, timer_size: int, scramble_size: int, enable_inspection: bool, background_color: str,
                        foreground_color: str, enable_backup: bool, backup_path: str, ready_color: str,
