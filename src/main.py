@@ -185,7 +185,7 @@ class MainApplication(tk.Frame):
         self.solve_index = 1
         self.MAX_SOLVES = 9997  # TODO get rid of this limitation
         self.solves_loaded = 0
-        self.LEN_SOLVES_ON_LOAD = 0
+        self.SOLVES_ON_LOAD = None
         self.btn_more = None
 
         # Timer area
@@ -633,7 +633,7 @@ class MainApplication(tk.Frame):
         else:
             self.solves_loaded = len(session_data.solves)
 
-        self.LEN_SOLVES_ON_LOAD = len(session_data.solves)
+        self.SOLVES_ON_LOAD = copy.copy(session_data.solves)
 
         # Fill left GUI list
         for solve in session_data.solves[-40:]:
@@ -649,10 +649,10 @@ class MainApplication(tk.Frame):
         self.session_data = session_data
 
     def load_more_solves(self):
-        solve_index = self.LEN_SOLVES_ON_LOAD - self.solves_loaded
+        solve_index = len(self.SOLVES_ON_LOAD) - self.solves_loaded
 
         solves_loaded_now = 0
-        for solve in reversed(self.session_data.solves[-self.solves_loaded - 40:-self.solves_loaded]):
+        for solve in reversed(self.SOLVES_ON_LOAD[-self.solves_loaded - 40:-self.solves_loaded]):
             tk.Label(self.frm_canvas_frame, text=f"{solve_index}. {format_time_seconds(solve)}", font="Times, 14") \
                 .grid(row=self.MAX_SOLVES - solve_index, column=0, sticky="W")
 
@@ -661,7 +661,7 @@ class MainApplication(tk.Frame):
 
         self.solves_loaded += solves_loaded_now
 
-        if self.solves_loaded == self.LEN_SOLVES_ON_LOAD:
+        if self.solves_loaded == len(self.SOLVES_ON_LOAD):
             self.btn_more.destroy()
 
     def apply_settings(self, timer_size: int, scramble_size: int, enable_inspection: bool, background_color: str,
