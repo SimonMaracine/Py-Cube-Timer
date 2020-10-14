@@ -185,7 +185,7 @@ class MainApplication(tk.Frame):
         self.solve_index = 1
         self.MAX_SOLVES = 9997  # TODO get rid of this limitation
         self.solves_loaded = 0
-        self.SOLVE_INDEX_ON_LOAD = 0
+        self.LEN_SOLVES_ON_LOAD = 0
         self.btn_more = None
 
         # Timer area
@@ -624,15 +624,16 @@ class MainApplication(tk.Frame):
         # Clear first
         self.clear_left_UI()
 
-        session_data.solves = [i + 1 for i in range(400)]
+        if len(session_data.solves) > 40:
+            self.solve_index = len(session_data.solves) - 40 + 1
+            self.solves_loaded = 40
 
-        self.solve_index = len(session_data.solves) - 40 + 1
-        self.SOLVE_INDEX_ON_LOAD = self.solve_index
-        self.solves_loaded = 40
-
-        if self.solve_index > 40:
             self.btn_more = tk.Button(self.frm_canvas_frame, text="More", command=self.load_more_solves)
             self.btn_more.grid(row=self.MAX_SOLVES + 1, column=0)
+        else:
+            self.solves_loaded = len(session_data.solves)
+
+        self.LEN_SOLVES_ON_LOAD = len(session_data.solves)
 
         # Fill left GUI list
         for solve in session_data.solves[-40:]:
@@ -648,17 +649,19 @@ class MainApplication(tk.Frame):
         self.session_data = session_data
 
     def load_more_solves(self):
-        solve_index = self.SOLVE_INDEX_ON_LOAD - self.solves_loaded - 1
+        solve_index = self.LEN_SOLVES_ON_LOAD - self.solves_loaded
 
+        solves_loaded_now = 0
         for solve in reversed(self.session_data.solves[-self.solves_loaded - 40:-self.solves_loaded]):
             tk.Label(self.frm_canvas_frame, text=f"{solve_index}. {format_time_seconds(solve)}", font="Times, 14") \
                 .grid(row=self.MAX_SOLVES - solve_index, column=0, sticky="W")
 
             solve_index -= 1
+            solves_loaded_now += 1
 
-        self.solves_loaded += 40
+        self.solves_loaded += solves_loaded_now
 
-        if self.solves_loaded == self.SOLVE_INDEX_ON_LOAD:
+        if self.solves_loaded == self.LEN_SOLVES_ON_LOAD:
             self.btn_more.destroy()
 
     def apply_settings(self, timer_size: int, scramble_size: int, enable_inspection: bool, background_color: str,
