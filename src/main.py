@@ -362,7 +362,13 @@ class MainApplication(tk.Frame):
         # Update left GUI list
         labels = self.frm_canvas_frame.winfo_children()
         assert labels
-        labels[-1].destroy()
+
+        # Search for the first widget in the list (the lowest row) and destroy it
+        rows = map(lambda widget: widget.grid_info()["row"], labels)
+        row_widget = {row: widget for row, widget in zip(rows, labels)}
+        last_widget_row = min(row_widget.keys())
+        row_widget[last_widget_row].destroy()
+
         self.solve_index -= 1
 
         # Update list
