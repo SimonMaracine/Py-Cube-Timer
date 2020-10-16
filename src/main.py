@@ -19,6 +19,7 @@ from src.data import data_folder_exists, recreate_data_folder, DEFAULT_BACKGROUN
     DEFAULT_SCRAMBLE_SIZE
 from src.about import About
 from src.plot import plot
+from src.inspect_solve import InspectSolve
 
 logging.basicConfig(level=logging.DEBUG, format="%(levelname)s:%(lineno)d:%(message)s")
 if not __debug__:
@@ -724,10 +725,9 @@ class MainApplication(tk.Frame):
         self.timer_inspection_color = inspection_color
 
     def inspect_solve(self, index: int):
-        print("Index: ", index)
-        print("Time: ", self.session_data.solves[index - 1].time)
-        print("Scramble: ", self.session_data.solves[index - 1].scramble)
-        print("Date: ", self.session_data.solves[index - 1].date)
+        top_level = tk.Toplevel(self.root)
+        InspectSolve(top_level, index, self.session_data.solves[index - 1], self.root.winfo_x() + 50,
+                     self.root.winfo_y() + 50)
 
     # Code copied from the internet and modified
     def kt_is_pressed(self):
