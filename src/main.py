@@ -182,6 +182,15 @@ class MainApplication(tk.Frame):
         self.cvs_times.create_window((0, 0), window=self.frm_canvas_frame, anchor="nw")
         self.frm_canvas_frame.bind("<Configure>", lambda event: self.frame_configure())
 
+        self.frm_indices = tk.Frame(self.frm_canvas_frame)
+        self.frm_indices.grid(row=0, column=0)
+        self.frm_solves = tk.Frame(self.frm_canvas_frame)
+        self.frm_solves.grid(row=0, column=1)
+        # self.frm_ao5 = tk.Frame(self.frm_canvas_frame)
+        # self.frm_ao5.grid(row=0, column=2)
+        # self.frm_ao12 = tk.Frame(self.frm_canvas_frame)
+        # self.frm_ao12.grid(row=0, column=3)
+
         self.solve_index = 1
         self.MAX_SOLVES = 9997  # TODO get rid of this limitation
         self.solves_loaded = 0
@@ -290,8 +299,13 @@ class MainApplication(tk.Frame):
             return
 
         # Update left GUI list
-        tk.Label(self.frm_canvas_frame, text=f"{self.solve_index}. {solve_time}", font="Times, 14") \
+        tk.Label(self.frm_indices, text=f"{self.solve_index}. ", font="Times, 14") \
             .grid(row=self.MAX_SOLVES - self.solve_index, column=0, sticky="W")
+
+        lbl_solve = tk.Label(self.frm_solves, text=f"{solve_time}", font="Times, 14")
+        lbl_solve.grid(row=self.MAX_SOLVES - self.solve_index, column=0, sticky="W")
+        lbl_solve.bind("<Button-1>", lambda event, index=self.solve_index: self.inspect_solve(index))  # A bit hacky
+
         self.solve_index += 1
 
         if self.solve_index == self.MAX_SOLVES:
@@ -299,15 +313,19 @@ class MainApplication(tk.Frame):
                                 "This session is done.", parent=self.root)
             return
 
+        date = str(datetime.datetime.now())
+        scramble = self.var_scramble.get()
+
         # Update list
-        self.session_data.solves.append(interpret_time_in_seconds(solve_time))
+        self.session_data.solves.append(Solve(time=solve_time, scramble=scramble, date=date,
+                                              raw_time=interpret_time_in_seconds(solve_time)))
 
         self.update_statistics(self.session_data)
 
         assert self.session_data.name
         try:
             dump_data(self.session_data.name + ".json",
-                      Solve(solve_time, self.var_scramble.get(), str(datetime.datetime.now())))
+                      Solve(solve_time, scramble, date, 0.0))  # dump_data doesn't care about raw_time anyway
         except FileNotFoundError:
             logging.error("Could not save the solve in session, because the file is missing")
             messagebox.showerror("Saving Failure", "Could not save the solve in session, because the file is missing.",
@@ -360,12 +378,19 @@ class MainApplication(tk.Frame):
             return
 
         # Update left GUI list
-        labels = self.frm_canvas_frame.winfo_children()
-        assert labels
+        time_labels = self.frm_solves.winfo_children()
+        index_labels = self.frm_indices.winfo_children()
+        assert time_labels
+        assert index_labels
 
         # Search for the last widget in the list (the lowest row) and destroy it
-        rows = map(lambda widget: widget.grid_info()["row"], labels)
-        row_widget = {row: widget for row, widget in zip(rows, labels)}
+        rows = map(lambda widget: widget.grid_info()["row"], time_labels)
+        row_widget = {row: widget for row, widget in zip(rows, time_labels)}
+        last_widget_row = min(row_widget.keys())
+        row_widget[last_widget_row].destroy()
+
+        rows = map(lambda widget: widget.grid_info()["row"], index_labels)
+        row_widget = {row: widget for row, widget in zip(rows, index_labels)}
         last_widget_row = min(row_widget.keys())
         row_widget[last_widget_row].destroy()
 
@@ -493,34 +518,36 @@ class MainApplication(tk.Frame):
         return sum(clone) / 10
 
     def update_statistics(self, session_data: SessionData):
+        solves_raw = list(map(lambda solve: solve.raw_time, session_data.solves))
+
         # Update mean
-        mean = sum(session_data.solves) / len(session_data.solves)
+        mean = sum(solves_raw) / len(session_data.solves)
         self.var_session_mean.set(format_time_seconds(mean))
         logging.debug(f"Mean is {mean}")
 
-        # Update current time, current ao5 and current a012
-        self.var_current_time.set(format_time_seconds(session_data.solves[-1]))
+        # Update current time, current ao5 and current ao12
+        self.var_current_time.set(session_data.solves[-1].time)
 
-        ao5_list = session_data.solves[-5:]
+        ao5_list = solves_raw[-5:]
         if len(ao5_list) >= 5:
             ao5 = MainApplication.calculate_ao5(ao5_list)
             self.var_current_ao5.set(format_time_seconds(ao5))
             logging.debug(f"ao5 is {ao5}")
 
-        ao12_list = session_data.solves[-12:]
+        ao12_list = solves_raw[-12:]
         if len(ao12_list) >= 12:
             ao12 = MainApplication.calculate_ao12(ao12_list)
             self.var_current_ao12.set(format_time_seconds(ao12))
             logging.debug(f"ao12 is {ao12}")
 
         # Update best time, best ao5 and best ao12
-        best_time = min(session_data.solves)
+        best_time = min(solves_raw)
         self.var_best_time.set(format_time_seconds(best_time))
 
         if len(ao5_list) >= 5:
             averages = []
-            for i in range(len(session_data.solves) - 4):
-                five = session_data.solves[0 + i:5 + i]
+            for i in range(len(solves_raw) - 4):
+                five = solves_raw[0 + i:5 + i]
                 averages.append(MainApplication.calculate_ao5(five))
 
             best_ao5 = min(averages)
@@ -529,8 +556,8 @@ class MainApplication(tk.Frame):
 
         if len(ao12_list) >= 12:
             averages = []
-            for i in range(len(session_data.solves) - 11):
-                twelve = session_data.solves[0 + i:12 + i]
+            for i in range(len(solves_raw) - 11):
+                twelve = solves_raw[0 + i:12 + i]
                 averages.append(MainApplication.calculate_ao12(twelve))
 
             best_ao12 = min(averages)
@@ -588,7 +615,10 @@ class MainApplication(tk.Frame):
 
     def clear_left_UI(self):
         # Only these must be reset
-        for label in self.frm_canvas_frame.winfo_children():
+        for label in self.frm_indices.winfo_children():
+            label.destroy()
+
+        for label in self.frm_solves.winfo_children():
             label.destroy()
 
         self.var_current_time.set("n/a")
@@ -635,16 +665,21 @@ class MainApplication(tk.Frame):
             self.solves_loaded = 40
 
             self.btn_more = tk.Button(self.frm_canvas_frame, text="More", command=self.load_more_solves)
-            self.btn_more.grid(row=self.MAX_SOLVES + 1, column=0)
+            self.btn_more.grid(row=1, column=0, columnspan=2)
         else:
             self.solves_loaded = len(session_data.solves)
 
         self.SOLVES_ON_LOAD = copy.copy(session_data.solves)
 
         # Fill left GUI list
+        solve: Solve
         for solve in session_data.solves[-40:]:
-            tk.Label(self.frm_canvas_frame, text=f"{self.solve_index}. {format_time_seconds(solve)}", font="Times, 14") \
+            tk.Label(self.frm_indices, text=f"{self.solve_index}. ", font="Times, 14") \
                 .grid(row=self.MAX_SOLVES - self.solve_index, column=0, sticky="W")
+
+            lbl_solve = tk.Label(self.frm_solves, text=f"{solve.time}", font="Times, 14")
+            lbl_solve.grid(row=self.MAX_SOLVES - self.solve_index, column=0, sticky="W")
+            lbl_solve.bind("<Button-1>", lambda event, index=self.solve_index: self.inspect_solve(index))  # A bit hacky
 
             self.solve_index += 1
 
@@ -658,9 +693,14 @@ class MainApplication(tk.Frame):
         solve_index = len(self.SOLVES_ON_LOAD) - self.solves_loaded
 
         solves_loaded_now = 0
+        solve: Solve
         for solve in reversed(self.SOLVES_ON_LOAD[-self.solves_loaded - 40:-self.solves_loaded]):
-            tk.Label(self.frm_canvas_frame, text=f"{solve_index}. {format_time_seconds(solve)}", font="Times, 14") \
+            tk.Label(self.frm_indices, text=f"{solve_index}. ", font="Times, 14") \
                 .grid(row=self.MAX_SOLVES - solve_index, column=0, sticky="W")
+
+            lbl_solve = tk.Label(self.frm_solves, text=f"{format_time_seconds(solve.raw_time)}", font="Times, 14")
+            lbl_solve.grid(row=self.MAX_SOLVES - solve_index, column=0, sticky="W")
+            lbl_solve.bind("<Button-1>", lambda event, index=solve_index: self.inspect_solve(index))  # A bit hacky
 
             solve_index -= 1
             solves_loaded_now += 1
@@ -681,6 +721,12 @@ class MainApplication(tk.Frame):
         self.backup_path = backup_path
         self.timer_ready_color = ready_color
         self.timer_inspection_color = inspection_color
+
+    def inspect_solve(self, index: int):
+        print("Index: ", index)
+        print("Time: ", self.session_data.solves[index - 1].time)
+        print("Scramble: ", self.session_data.solves[index - 1].scramble)
+        print("Date: ", self.session_data.solves[index - 1].date)
 
     # Code copied from the internet and modified
     def kt_is_pressed(self):

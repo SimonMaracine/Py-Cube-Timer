@@ -24,12 +24,13 @@ class Solve:
     time: str  # Formatted time
     scramble: str
     date: str
+    raw_time: float  # In seconds
 
 
 @dataclasses.dataclass
 class SessionData:
     name: str
-    solves: List[float]  # Solve times can sometimes contain only one decimal
+    solves: List[Solve]  # Solve times can sometimes contain only one decimal
     all_ao5: List[float]
     all_ao12: List[float]
 
@@ -65,7 +66,9 @@ def dump_data(file_name: str, solve: Solve):
 
         file.seek(0)
 
-        contents["solves"].append(solve.__dict__)
+        dictionary = copy.copy(solve.__dict__)
+        del dictionary["raw_time"]  # Don't dump raw_time
+        contents["solves"].append(dictionary)
 
         json.dump(contents, file, indent=2)
         file.truncate()
@@ -177,8 +180,8 @@ def load_session_data(file_name: str) -> Optional[SessionData]:
     try:
         name = contents["name"]
         # Solve times can sometimes contain only one decimal
-        solves: List[float] = [interpret_time_in_seconds(solve["time"]) for solve in contents["solves"]]
-
+        solves: List[Solve] = [Solve(time=solve["time"], scramble=solve["scramble"], date=solve["date"],
+                                     raw_time=interpret_time_in_seconds(solve["time"])) for solve in contents["solves"]]
         assert name
     except KeyError as err:  # Missing contents
         logging.error(f"Missing entry: {err}")
