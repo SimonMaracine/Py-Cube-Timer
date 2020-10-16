@@ -16,7 +16,7 @@ class Mode(Enum):
 
 class SelectSession(tk.Frame):
 
-    def __init__(self, top_level: tk.Toplevel, on_ok: Callable[[str], None], mode: Mode):
+    def __init__(self, top_level: tk.Toplevel, on_ok: Callable[[str], None], mode: Mode, x: int, y: int):
         super().__init__(top_level)
         self.top_level = top_level
         self.on_ok = on_ok
@@ -29,6 +29,8 @@ class SelectSession(tk.Frame):
             self.top_level.title("Open Session")
         elif self.mode == Mode.RENAME_SESSION:
             self.top_level.title("Rename Session")
+
+        self.top_level.geometry(f"+{x}+{y}")
 
         frm_entry = tk.Frame(self)
         if self.mode == Mode.OPEN_SESSION:

@@ -13,13 +13,15 @@ from src.timer import DEFAULT_READY_COLOR, DEFAULT_INSPECTION_COLOR
 
 class Settings(tk.Frame):
 
-    def __init__(self, top_level: tk.Toplevel, on_apply: Callable[[int, int, bool, str, str, bool, str, str, str], None]):
+    def __init__(self, top_level: tk.Toplevel, on_apply: Callable[[int, int, bool, str, str, bool, str, str, str], None],
+                 x: int, y: int):
         super().__init__(top_level)
         self.top_level = top_level
         self.on_apply = on_apply
         self.pack(padx=10, pady=10, expand=True)
 
         self.top_level.title("Settings")
+        self.top_level.geometry(f"+{x}+{y}")
 
         tk.Label(self, text="Timer size").grid(row=0, column=0, sticky="s")
         tk.Label(self, text="Scramble size").grid(row=1, column=0, sticky="s")

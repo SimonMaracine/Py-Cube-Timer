@@ -6,7 +6,7 @@ from src.session import SessionData
 def plot(session_data: SessionData):
     plt.figure().canvas.set_window_title("Statistics")  # This might be wrong, I'm not sure
 
-    times = session_data.solves
+    times = list(map(lambda solve: solve.raw_time, session_data.solves))
     solve_indices = [i + 1 for i in range(len(session_data.solves))]
     plt.plot(solve_indices, times, label="single", color="gray")
 

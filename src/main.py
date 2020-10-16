@@ -429,7 +429,8 @@ class MainApplication(tk.Frame):
 
     def rename_this_session(self):
         top_level = tk.Toplevel(self.root)
-        SelectSession(top_level, self.rename_session, Mode.RENAME_SESSION)
+        SelectSession(top_level, self.rename_session, Mode.RENAME_SESSION, self.root.winfo_x() + 50,
+                      self.root.winfo_y() + 50)
 
     def rename_session(self, name: str):
         try:
@@ -588,19 +589,19 @@ class MainApplication(tk.Frame):
 
     def settings(self):
         top_level = tk.Toplevel(self.root)
-        Settings(top_level, self.apply_settings)
+        Settings(top_level, self.apply_settings,  self.root.winfo_x() + 50, self.root.winfo_y() + 50)
 
     def about(self):
         top_level = tk.Toplevel(self.root)
-        About(top_level)
+        About(top_level, self.root.winfo_x() + 50, self.root.winfo_y() + 50)
 
     def new_session(self):
         top_level = tk.Toplevel(self.root)
-        SelectSession(top_level, self.create_session, Mode.NEW_SESSION)
+        SelectSession(top_level, self.create_session, Mode.NEW_SESSION, self.root.winfo_x() + 50, self.root.winfo_y() + 50)
 
     def open_session(self):
         top_level = tk.Toplevel(self.root)
-        SelectSession(top_level, self.load_session, Mode.OPEN_SESSION)
+        SelectSession(top_level, self.load_session, Mode.OPEN_SESSION, self.root.winfo_x() + 50, self.root.winfo_y() + 50)
 
     def see_statistics(self):
         if self.session_data is None:
