@@ -74,7 +74,12 @@ def dump_data(file_name: str, solve: Solve):
         file.truncate()
 
 
-def remove_solve_out_of_session(file_name: str):
+def remove_solve_out_of_session(file_name: str, index: int):
+    """
+    index is from 1 to 9997
+    -1 is handled separately; don't put negative numbers except for -1
+
+    """
     with open(join(_SESSIONS_PATH, file_name), "r+") as file:
         try:
             contents = json.load(file)
@@ -84,8 +89,12 @@ def remove_solve_out_of_session(file_name: str):
 
         file.seek(0)
 
-        logging.debug(f"Removing solve {contents['solves'][-1]}")
-        del contents["solves"][-1]
+        if index == -1:
+            logging.debug(f"Removing solve {contents['solves'][index]}")
+            del contents["solves"][index]
+        else:
+            logging.debug(f"Removing solve {contents['solves'][index - 1]}")
+            del contents["solves"][index - 1]
 
         json.dump(contents, file, indent=2)
         file.truncate()  # Don't forget this!

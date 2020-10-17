@@ -368,6 +368,14 @@ class MainApplication(tk.Frame):
                                          "the path is not specified.", parent=self.root)
 
     def remove_last_solve_out_of_session(self):
+        self.remove_solve_out_of_session(-1)
+
+    def remove_solve_out_of_session(self, index: int):
+        """
+        index is from 1 to 9997
+        -1 is handled separately; don't put negative numbers except for -1
+
+        """
         assert self.session_data is not None
 
         if not self.session_data.solves:
@@ -386,22 +394,40 @@ class MainApplication(tk.Frame):
 
         # Search for the last widget in the list (the lowest row) and destroy it
         rows = map(lambda widget: widget.grid_info()["row"], time_labels)
-        row_widget = {row: widget for row, widget in zip(rows, time_labels)}
-        last_widget_row = min(row_widget.keys())
-        row_widget[last_widget_row].destroy()
+        time_row_widget_dict = {row: widget for row, widget in zip(rows, time_labels)}
+        time_last_widget_row = min(time_row_widget_dict.keys())
 
         rows = map(lambda widget: widget.grid_info()["row"], index_labels)
-        row_widget = {row: widget for row, widget in zip(rows, index_labels)}
-        last_widget_row = min(row_widget.keys())
-        row_widget[last_widget_row].destroy()
+        index_row_widget_dict = {row: widget for row, widget in zip(rows, index_labels)}
+        index_last_widget_row = min(index_row_widget_dict.keys())
+
+        if index == -1:
+            time_row_widget_dict[time_last_widget_row].destroy()
+            index_row_widget_dict[time_last_widget_row].destroy()
+        else:
+            time_row_widget_dict[index_last_widget_row + len(self.session_data.solves) - index].destroy()
+            index_row_widget_dict[index_last_widget_row + len(self.session_data.solves) - index].destroy()
 
         self.solve_index -= 1
 
         # Update list
-        del self.session_data.solves[-1]
+        if index == -1:
+            del self.session_data.solves[-1]
+        else:
+            del self.session_data.solves[index - 1]
 
         if self.session_data.solves:
             self.update_statistics(self.session_data)
+
+        # Fix indexing when deleting a solve from the middle
+        if index != -1:
+            index_labels = self.frm_indices.winfo_children()
+            rows = list(map(lambda widget: widget.grid_info()["row"], index_labels))
+            row_widget_dict = {row: widget for row, widget in zip(rows, index_labels)}
+            for i in range(0, len(self.session_data.solves) - index + 1):
+                label = row_widget_dict[index_last_widget_row + len(self.session_data.solves) - index - i]
+                index_text = str(int(label["text"][0:-2]) - 1) + "."
+                label.configure(text=index_text)
 
         # Update these which don't always show
         if len(self.session_data.solves) < 5:
@@ -418,11 +444,14 @@ class MainApplication(tk.Frame):
 
         assert self.session_data.name
         try:
-            remove_solve_out_of_session(self.session_data.name + ".json")
+            if index == -1:
+                remove_solve_out_of_session(self.session_data.name + ".json", -1)
+            else:
+                remove_solve_out_of_session(self.session_data.name + ".json", index)
         except FileNotFoundError:
             logging.error("Could not remove the solve from the session, because the file is missing")
             messagebox.showerror("Saving Failure", "Could not remove the solve from the session, "
-                                 "because the file is missing.", parent=self.root)
+                                                   "because the file is missing.", parent=self.root)
         except FileCorruptedError:
             logging.error("Could not remove the solve, because the file is corrupted")
             messagebox.showerror("Saving Failure", "Could not remove the solve, because the file is corrupted.",
@@ -726,8 +755,8 @@ class MainApplication(tk.Frame):
 
     def inspect_solve(self, index: int):
         top_level = tk.Toplevel(self.root)
-        InspectSolve(top_level, index, self.session_data.solves[index - 1], self.root.winfo_x() + 50,
-                     self.root.winfo_y() + 50)
+        InspectSolve(top_level, index, self.session_data.solves[index - 1], self.remove_solve_out_of_session,
+                     self.root.winfo_x() + 50, self.root.winfo_y() + 50)
 
     # Code copied from the internet and modified
     def kt_is_pressed(self):
