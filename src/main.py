@@ -382,7 +382,9 @@ class MainApplication(tk.Frame):
             messagebox.showinfo("No Solves", "There are no solves in this session.", parent=self.root)
             return False
 
-        if not messagebox.askyesno("Remove Last Solve", "Are you sure you want to remove the last solve in the session?",
+        if not messagebox.askyesno("Remove Last Solve" if index == -1 else "Remove Solve",
+                                   "Are you sure you want to remove the last solve in the session?" if index == -1 else
+                                   "Are you sure you want to remove this solve?",
                                    parent=self.root if parent is None else parent):
             return False
 
