@@ -6,6 +6,7 @@ import copy
 import tkinter as tk
 from tkinter import messagebox
 from typing import Optional
+from os.path import join
 
 import src.globals
 from src.timer import Timer, interpret_time_in_seconds, format_time_seconds, DEFAULT_READY_COLOR, DEFAULT_INSPECTION_COLOR
@@ -41,6 +42,8 @@ class MainApplication(tk.Frame):
         self.root.title("Py-Cube-Timer")
         self.root.wm_protocol("WM_DELETE_WINDOW", self.exit)
         self.root.geometry("1024x576")
+        self.icon = tk.PhotoImage(file=join("data", "icon.png"), master=self.root)
+        self.root.iconphoto(True, self.icon)
 
         # Main menu
         men_file = tk.Menu(self)
