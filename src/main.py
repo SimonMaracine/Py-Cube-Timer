@@ -370,21 +370,21 @@ class MainApplication(tk.Frame):
     def remove_last_solve_out_of_session(self):
         self.remove_solve_out_of_session(-1)
 
-    def remove_solve_out_of_session(self, index: int):
+    def remove_solve_out_of_session(self, index: int, parent: tk.Toplevel = None) -> bool:
         """
         index is from 1 to 9997
-        -1 is handled separately; don't put negative numbers except for -1
+        -1 is handled separately; don't put negative numbers except for -1.
 
         """
         assert self.session_data is not None
 
         if not self.session_data.solves:
             messagebox.showinfo("No Solves", "There are no solves in this session.", parent=self.root)
-            return
+            return False
 
         if not messagebox.askyesno("Remove Last Solve", "Are you sure you want to remove the last solve in the session?",
-                                   parent=self.root):
-            return
+                                   parent=self.root if parent is None else parent):
+            return False
 
         # Update left GUI list
         time_labels = self.frm_solves.winfo_children()
@@ -456,6 +456,8 @@ class MainApplication(tk.Frame):
             logging.error("Could not remove the solve, because the file is corrupted")
             messagebox.showerror("Saving Failure", "Could not remove the solve, because the file is corrupted.",
                                  parent=self.root)
+
+        return True
 
     def rename_this_session(self):
         top_level = tk.Toplevel(self.root)

@@ -7,7 +7,8 @@ from src.session import Solve
 
 class InspectSolve(tk.Frame):
 
-    def __init__(self, top_level: tk.Toplevel, index: int, solve: Solve, delete_solve: Callable[[int], None], x: int, y: int):
+    def __init__(self, top_level: tk.Toplevel, index: int, solve: Solve, delete_solve: Callable[[int, tk.Toplevel], bool],
+                 x: int, y: int):
         super().__init__(top_level)
         self.top_level = top_level
         self.index = index
@@ -29,5 +30,5 @@ class InspectSolve(tk.Frame):
         tk.Button(self.frm_buttons, text="Delete", command=self.delete, background="red").grid(row=0, column=1, padx=(100, 0))
 
     def delete(self):
-        self.delete_solve(self.index)
-        self.top_level.destroy()
+        if self.delete_solve(self.index, self.top_level):
+            self.top_level.destroy()
