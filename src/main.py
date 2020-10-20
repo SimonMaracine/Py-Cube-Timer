@@ -51,6 +51,7 @@ class MainApplication(tk.Frame):
         men_file.add_command(label="New Session", command=self.new_session)
         men_file.add_command(label="Open Session", command=self.open_session)
         men_file.add_command(label="See Statistics", command=self.see_statistics)
+        men_file.add_command(label="Backup Session Now", command=self.backup_session_now)
         men_file.add_command(label="Exit", command=self.exit)
 
         men_edit = tk.Menu(self)
@@ -346,30 +347,7 @@ class MainApplication(tk.Frame):
         self.var_scramble.set(generate_scramble())
 
         # Backup the session
-        if self.enable_backup:
-            if len(self.session_data.solves) % 5 == 0:  # Magic number :O
-                if self.backup_path:
-                    try:
-                        backup_session(self.session_data.name + ".json", self.backup_path)
-                    except FileNotFoundError:
-                        messagebox.showerror("Backup Failure", "Could not backup the session, because the session file "
-                                             "is missing.",
-                                             parent=self.root)
-                        return
-                    except SameFileError:
-                        messagebox.showerror("Backup Failure", "Could not backup the session, because the backup folder "
-                                             "is the sessions folder.",  # TODO maybe avoid this completely
-                                             parent=self.root)
-                        return
-                    except OSError:
-                        messagebox.showerror("Backup Failure", "Could not backup the session, because the backup folder "
-                                             "is not writable (permission denied).",
-                                             parent=self.root)
-                        return
-                    logging.info(f"Session backed up in {self.backup_path}")
-                else:  # The string was empty
-                    messagebox.showerror("No Backup Folder", "Couldn't backup the session, because "
-                                         "the path is not specified.", parent=self.root)
+        self.backup_session()
 
     def remove_last_solve_out_of_session(self):
         self.remove_solve_out_of_session(-1)
@@ -656,7 +634,40 @@ class MainApplication(tk.Frame):
 
         plot(self.session_data)
 
-    def clear_left_UI(self):  # TODO force backup now button
+    def backup_session_now(self):
+        self.backup_session()
+
+    def backup_session(self):
+        if self.enable_backup:
+            if len(self.session_data.solves) % 5 == 0:  # Magic number :O
+                if self.backup_path:
+                    try:
+                        backup_session(self.session_data.name + ".json", self.backup_path)
+                    except FileNotFoundError:
+                        messagebox.showerror("Backup Failure", "Couldn't backup the session, because the session file "
+                                             "is missing.", parent=self.root)
+                        return
+                    except SameFileError:
+                        messagebox.showerror("Backup Failure", "Couldn't backup the session, because the backup folder "
+                                             "is the sessions folder.", parent=self.root)  # TODO maybe avoid this completely
+                        return
+                    except OSError:
+                        messagebox.showerror("Backup Failure", "Couldn't backup the session, because the backup folder "
+                                             "is not writable (permission denied).", parent=self.root)
+                        return
+
+                    logging.info(f"Session backed up in {self.backup_path}")
+                    return  # Success, so don't continue messaging that backup is disabled
+                else:  # The string was empty
+                    logging.error("Couldn't backup the session, because the path is not specified.")
+                    messagebox.showerror("No Backup Folder", "Couldn't backup the session, because "
+                                         "the path is not specified.", parent=self.root)
+                    return
+
+        logging.info("Cannot backup, because it is disabled in the setings")
+        messagebox.showinfo("Backup Disbaled", "Cannot backup, because it is disabled in the setings.", parent=self.root)
+
+    def clear_left_UI(self):
         # Only these must be reset
         for label in self.frm_indices.winfo_children():
             label.destroy()

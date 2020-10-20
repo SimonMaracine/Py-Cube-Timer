@@ -5,8 +5,8 @@
   "enable_inspection": true,
   "background_color": "#f0f0ed",
   "foreground_color": "#000000",
-  "enable_backup": false,
-  "backup_path": "",
+  "enable_backup": true,
+  "backup_path": "/home/simon",
   "ready_color": "green",
   "inspection_color": "red"
 }
