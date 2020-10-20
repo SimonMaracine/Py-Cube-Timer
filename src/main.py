@@ -3,6 +3,7 @@ import time
 import threading
 import datetime
 import copy
+import webbrowser
 import tkinter as tk
 from tkinter import messagebox
 from typing import Optional
@@ -59,7 +60,7 @@ class MainApplication(tk.Frame):
         men_edit.add_command(label="Settings", command=self.settings)
 
         men_help = tk.Menu(self)
-        men_help.add_command(label="Info", command=None)
+        men_help.add_command(label="Info", command=self.info)
         men_help.add_command(label="About", command=self.about)
 
         men_main = tk.Menu(self)
@@ -632,6 +633,10 @@ class MainApplication(tk.Frame):
         top_level = tk.Toplevel(self.root)
         About(top_level, self.root.winfo_x() + 50, self.root.winfo_y() + 50)
 
+    @staticmethod
+    def info():
+        webbrowser.open(join("info", "index.html"))
+
     def new_session(self):
         top_level = tk.Toplevel(self.root)
         SelectSession(top_level, self.create_session, Mode.NEW_SESSION, self.root.winfo_x() + 50, self.root.winfo_y() + 50)
@@ -651,7 +656,7 @@ class MainApplication(tk.Frame):
 
         plot(self.session_data)
 
-    def clear_left_UI(self):
+    def clear_left_UI(self):  # TODO force backup now button
         # Only these must be reset
         for label in self.frm_indices.winfo_children():
             label.destroy()
