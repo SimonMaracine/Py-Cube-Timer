@@ -198,7 +198,7 @@ class MainApplication(tk.Frame):
         # self.frm_ao12.grid(row=0, column=3)
 
         self.solve_index = 1
-        self.MAX_SOLVES = 9997  # TODO get rid of this limitation
+        self.MAX_SOLVES = 9997
         self.solves_loaded = 0
         self.SOLVES_ON_LOAD = None
         self.btn_more = None
@@ -208,7 +208,7 @@ class MainApplication(tk.Frame):
         self.lbl_time = tk.Label(frm_timer, textvariable=self.var_time, font=f"Times, {timer_size}")
         self.lbl_time.pack()
 
-        self.check_to_save_in_session()  # FIXME I thing I've got some problems
+        self.check_to_save_in_session()
 
         self.timer = Timer(self.var_time)
         self.timer.with_inspection = enable_inspection
@@ -684,6 +684,7 @@ class MainApplication(tk.Frame):
         self.var_session_mean.set("n/a")
 
         self.solve_index = 1
+        self.solves_loaded = 0  # Technically not necessary
         self.var_time.set("0.00")
 
     def create_session(self, name: str):
