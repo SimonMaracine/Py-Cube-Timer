@@ -347,7 +347,8 @@ class MainApplication(tk.Frame):
         self.var_scramble.set(generate_scramble())
 
         # Backup the session
-        self.backup_session()
+        if len(self.session_data.solves) % 5 == 0:  # Magic number :O
+            self.backup_session()
 
     def remove_last_solve_out_of_session(self):
         self.remove_solve_out_of_session(-1)
@@ -639,30 +640,29 @@ class MainApplication(tk.Frame):
 
     def backup_session(self):
         if self.enable_backup:
-            if len(self.session_data.solves) % 5 == 0:  # Magic number :O
-                if self.backup_path:
-                    try:
-                        backup_session(self.session_data.name + ".json", self.backup_path)
-                    except FileNotFoundError:
-                        messagebox.showerror("Backup Failure", "Couldn't backup the session, because the session file "
-                                             "is missing.", parent=self.root)
-                        return
-                    except SameFileError:
-                        messagebox.showerror("Backup Failure", "Couldn't backup the session, because the backup folder "
-                                             "is the sessions folder.", parent=self.root)  # TODO maybe avoid this completely
-                        return
-                    except OSError:
-                        messagebox.showerror("Backup Failure", "Couldn't backup the session, because the backup folder "
-                                             "is not writable (permission denied).", parent=self.root)
-                        return
-
-                    logging.info(f"Session backed up in {self.backup_path}")
-                    return  # Success, so don't continue messaging that backup is disabled
-                else:  # The string was empty
-                    logging.error("Couldn't backup the session, because the path is not specified.")
-                    messagebox.showerror("No Backup Folder", "Couldn't backup the session, because "
-                                         "the path is not specified.", parent=self.root)
+            if self.backup_path:
+                try:
+                    backup_session(self.session_data.name + ".json", self.backup_path)
+                except FileNotFoundError:
+                    messagebox.showerror("Backup Failure", "Couldn't backup the session, because the session file "
+                                         "is missing.", parent=self.root)
                     return
+                except SameFileError:
+                    messagebox.showerror("Backup Failure", "Couldn't backup the session, because the backup folder "
+                                         "is the sessions folder.", parent=self.root)  # TODO maybe avoid this completely
+                    return
+                except OSError:
+                    messagebox.showerror("Backup Failure", "Couldn't backup the session, because the backup folder "
+                                         "is not writable (permission denied).", parent=self.root)
+                    return
+
+                logging.info(f"Session backed up in {self.backup_path}")
+                return  # Success, so don't continue messaging that backup is disabled
+            else:  # The string was empty
+                logging.error("Couldn't backup the session, because the path is not specified.")
+                messagebox.showerror("No Backup Folder", "Couldn't backup the session, because "
+                                     "the path is not specified.", parent=self.root)
+                return
 
         logging.info("Cannot backup, because it is disabled in the setings")
         messagebox.showinfo("Backup Disbaled", "Cannot backup, because it is disabled in the setings.", parent=self.root)
@@ -724,6 +724,11 @@ class MainApplication(tk.Frame):
         else:
             self.solves_loaded = len(session_data.solves)
 
+            # Do this, because btn_more might stick from the previous session list
+            if self.btn_more is not None:
+                self.btn_more.destroy()
+                self.btn_more = None
+
         self.SOLVES_ON_LOAD = copy.copy(session_data.solves)
 
         # Fill left GUI list
@@ -764,6 +769,7 @@ class MainApplication(tk.Frame):
 
         if self.solves_loaded == len(self.SOLVES_ON_LOAD):
             self.btn_more.destroy()
+            self.btn_more = None
 
     def apply_settings(self, timer_size: int, scramble_size: int, enable_inspection: bool, background_color: str,
                        foreground_color: str, enable_backup: bool, backup_path: str, ready_color: str,
