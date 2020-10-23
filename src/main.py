@@ -573,7 +573,7 @@ class MainApplication(tk.Frame):
             self.var_best_ao5.set(format_time_seconds(best_ao5))
             session_data.all_ao5 = averages  # Write to session data
         else:
-            session_data.all_ao5.clear()
+            session_data.all_ao5.clear()  # TODO this might be wrong
 
         if len(ao12_list) >= 12:
             averages = []

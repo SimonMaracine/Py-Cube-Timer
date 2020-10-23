@@ -1,6 +1,6 @@
 import tkinter as tk
 
-VERSION = "v0.1.0"
+VERSION = "v0.2.0"
 
 
 class About(tk.Frame):
