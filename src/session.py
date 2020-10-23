@@ -218,5 +218,5 @@ def backup_session(session_file: str, folder_path: str):
         logging.error(f"Cannot backup in the sessions folder")
         raise SameFileError
     except OSError:
-        logging.error(f"Could not backup file {source}, because the destination is not writable (permission denied)")
+        logging.error(f'Could not backup file "{source}", because the destination is not writable (permission denied)')
         raise

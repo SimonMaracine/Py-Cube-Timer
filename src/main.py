@@ -346,9 +346,10 @@ class MainApplication(tk.Frame):
         # Generate new scramble
         self.var_scramble.set(generate_scramble())
 
-        # Backup the session
+        # Backup the session, if appropriate
         if len(self.session_data.solves) % 5 == 0:  # Magic number :O
-            self.backup_session()
+            if self.enable_backup:
+                self.backup_session()
 
     def remove_last_solve_out_of_session(self):
         self.remove_solve_out_of_session(-1)
@@ -571,6 +572,8 @@ class MainApplication(tk.Frame):
             best_ao5 = min(averages)
             self.var_best_ao5.set(format_time_seconds(best_ao5))
             session_data.all_ao5 = averages  # Write to session data
+        else:
+            session_data.all_ao5.clear()
 
         if len(ao12_list) >= 12:
             averages = []
@@ -581,6 +584,8 @@ class MainApplication(tk.Frame):
             best_ao12 = min(averages)
             self.var_best_ao12.set(format_time_seconds(best_ao12))
             session_data.all_ao12 = averages  # Write to session data
+        else:
+            session_data.all_ao12.clear()
 
     def load_last_session(self):
         try:
@@ -636,36 +641,37 @@ class MainApplication(tk.Frame):
         plot(self.session_data)
 
     def backup_session_now(self):
-        self.backup_session()
+        if self.enable_backup:
+            self.backup_session()
+        else:
+            logging.info("Couldn't backup the session, because it is disabled in the settings")
+            messagebox.showinfo("Backup Disbaled", "Couldn't backup the session, because it is disabled in the settings.",
+                                parent=self.root)
 
     def backup_session(self):
-        if self.enable_backup:
-            if self.backup_path:
-                try:
-                    backup_session(self.session_data.name + ".json", self.backup_path)
-                except FileNotFoundError:
-                    messagebox.showerror("Backup Failure", "Couldn't backup the session, because the session file "
-                                         "is missing.", parent=self.root)
-                    return
-                except SameFileError:
-                    messagebox.showerror("Backup Failure", "Couldn't backup the session, because the backup folder "
-                                         "is the sessions folder.", parent=self.root)  # TODO maybe avoid this completely
-                    return
-                except OSError:
-                    messagebox.showerror("Backup Failure", "Couldn't backup the session, because the backup folder "
-                                         "is not writable (permission denied).", parent=self.root)
-                    return
-
-                logging.info(f"Session backed up in {self.backup_path}")
-                return  # Success, so don't continue messaging that backup is disabled
-            else:  # The string was empty
-                logging.error("Couldn't backup the session, because the path is not specified.")
-                messagebox.showerror("No Backup Folder", "Couldn't backup the session, because "
-                                     "the path is not specified.", parent=self.root)
+        if self.backup_path:
+            try:
+                backup_session(self.session_data.name + ".json", self.backup_path)
+            except FileNotFoundError:
+                messagebox.showerror("Backup Failure", "Couldn't backup the session, because the session file "
+                                     "is missing.", parent=self.root)
+                return
+            except SameFileError:
+                messagebox.showerror("Backup Failure", "Couldn't backup the session, because the backup folder "
+                                     "is the sessions folder.", parent=self.root)  # TODO maybe avoid this completely
+                return
+            except OSError:
+                messagebox.showerror("Backup Failure", "Couldn't backup the session, because the backup folder "
+                                     "is not writable (permission denied).", parent=self.root)
                 return
 
-        logging.info("Cannot backup, because it is disabled in the setings")
-        messagebox.showinfo("Backup Disbaled", "Cannot backup, because it is disabled in the setings.", parent=self.root)
+            logging.info(f"Session backed up in {self.backup_path}")
+            return  # Success, so don't continue messaging that backup is disabled
+        else:  # The string was empty
+            logging.error("Couldn't backup the session, because the path is not specified.")
+            messagebox.showerror("No Backup Folder", "Couldn't backup the session, because "
+                                 "the path is not specified.", parent=self.root)
+            return
 
     def clear_left_UI(self):
         # Only these must be reset
@@ -689,11 +695,11 @@ class MainApplication(tk.Frame):
 
     def create_session(self, name: str):
         try:
-            self.session_data = create_new_session(name, True)
+            self.session_data = create_new_session(name, check_first=True)
         except FileExistsError:
             if messagebox.askyesno("Session Already Exists", f'Session "{name}" already exists. '
                                    "Do you want to overwrite it?", parent=self.root):
-                self.session_data = create_new_session(name, False)
+                self.session_data = create_new_session(name, check_first=False)
             else:
                 return
 

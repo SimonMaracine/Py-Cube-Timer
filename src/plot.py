@@ -20,6 +20,8 @@ def plot(session_data: SessionData):
         indices = [i + 12 for i in range(len(ao12))]
         plt.plot(indices, ao12, label="ao12", color="blue")
 
+    plt.gca().xaxis.get_major_locator().set_params(integer=True)
+
     plt.xlabel("solve index")
     plt.ylabel("solve time (s)")
     plt.title(session_data.name)
