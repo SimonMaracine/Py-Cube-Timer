@@ -114,8 +114,8 @@ class Settings(tk.Frame):
         tk.Button(frm_buttons, text="Reset to default", command=self.default) \
             .grid(row=0, column=0, columnspan=3, pady=(0, 10))
         tk.Button(frm_buttons, text="Ok", command=self.ok).grid(row=1, column=0)
-        tk.Button(frm_buttons, text="Cancel", command=self.top_level.destroy).grid(row=1, column=1, padx=(6, 0))
-        tk.Button(frm_buttons, text="Apply", command=self.apply).grid(row=1, column=2, padx=(6, 0))
+        tk.Button(frm_buttons, text="Cancel", command=self.top_level.destroy).grid(row=1, column=1, padx=(10, 0))
+        tk.Button(frm_buttons, text="Apply", command=self.apply).grid(row=1, column=2, padx=(10, 0))
 
     def choose_background_color(self):
         color: tuple = colorchooser.askcolor(title="Background Color", initialcolor=self.var_background_color.get(),
