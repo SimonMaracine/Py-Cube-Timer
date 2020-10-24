@@ -111,9 +111,11 @@ class Settings(tk.Frame):
         frm_buttons = tk.Frame(self)
         frm_buttons.grid(row=6, column=0, columnspan=2, pady=(12, 0))
 
-        tk.Button(frm_buttons, text="Reset to default", command=self.default).grid(row=0, column=0)
-        tk.Button(frm_buttons, text="Apply", command=self.apply).grid(row=0, column=1, padx=(6, 0))
-        tk.Button(frm_buttons, text="Cancel", command=self.top_level.destroy).grid(row=0, column=2, padx=(6, 0))
+        tk.Button(frm_buttons, text="Reset to default", command=self.default) \
+            .grid(row=0, column=0, columnspan=3, pady=(0, 10))
+        tk.Button(frm_buttons, text="Ok", command=self.ok).grid(row=1, column=0)
+        tk.Button(frm_buttons, text="Cancel", command=self.top_level.destroy).grid(row=1, column=1, padx=(6, 0))
+        tk.Button(frm_buttons, text="Apply", command=self.apply).grid(row=1, column=2, padx=(6, 0))
 
     def choose_background_color(self):
         color: tuple = colorchooser.askcolor(title="Background Color", initialcolor=self.var_background_color.get(),
@@ -149,6 +151,10 @@ class Settings(tk.Frame):
             self.var_inspection_color.set(color[1])
             self.btn_inspection_color.configure(text=self.var_inspection_color.get())
 
+    def ok(self):
+        self.apply()
+        self.top_level.destroy()
+
     def apply(self):
         timer_size = self.scl_timer_size.get()
         scramble_size = self.scl_scramble_size.get()
@@ -167,7 +173,6 @@ class Settings(tk.Frame):
                       enable_backup, backup_path, hex_ready, hex_inspection)
         self.write_settings(timer_size, scramble_size, enable_inspection, hex_background, hex_foreground,
                             enable_backup, backup_path, hex_ready, hex_inspection)
-        self.top_level.destroy()
 
     def default(self):
         if messagebox.askyesno("Revert To Default", "Are you sure you want to revert to default settings?",
