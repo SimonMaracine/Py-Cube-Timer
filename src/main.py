@@ -43,8 +43,13 @@ class MainApplication(tk.Frame):
         self.root.title("Py-Cube-Timer")
         self.root.wm_protocol("WM_DELETE_WINDOW", self.exit)
         self.root.geometry("1024x576")
-        self.icon = tk.PhotoImage(file=join("data", "icon.png"), master=self.root)
-        self.root.iconphoto(True, self.icon)
+
+        try:
+            self.icon = tk.PhotoImage(file=join("data", "icon.png"), master=self.root)
+        except tk.TclError:
+            logging.error("Icon not found")
+        else:
+            self.root.iconphoto(True, self.icon)
 
         # Main menu
         men_file = tk.Menu(self)
