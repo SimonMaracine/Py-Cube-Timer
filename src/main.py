@@ -275,7 +275,7 @@ class MainApplication(tk.Frame):
                                      parent=self.root)
                 return
             if not self.stopped_timer:
-                if not self.timer.is_running():  # TODO check for errors
+                if not self.timer.is_running():
                     self.timer.start()
                     if self.timer.with_inspection:  # This is to handle the case when there is no inspection
                         self.change_timer_color(self.timer_inspection_color)
@@ -578,7 +578,7 @@ class MainApplication(tk.Frame):
             self.var_best_ao5.set(format_time_seconds(best_ao5))
             session_data.all_ao5 = averages  # Write to session data
         else:
-            session_data.all_ao5.clear()  # TODO this might be wrong
+            session_data.all_ao5.clear()
 
         if len(ao12_list) >= 12:
             averages = []
