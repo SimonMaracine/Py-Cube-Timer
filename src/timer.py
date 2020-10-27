@@ -14,8 +14,8 @@ DEFAULT_INSPECTION_COLOR = "red"
 class Timer:
 
     if sys.platform == "win32":
-        WAIT_TIME_INSPECTION = 0.97
-        WAIT_TIME_SOLVE = 0.097
+        WAIT_TIME_INSPECTION = 0.89
+        WAIT_TIME_SOLVE = 0.089
     else:
         WAIT_TIME_INSPECTION = 0.992
         WAIT_TIME_SOLVE = 0.0993
@@ -86,7 +86,6 @@ class Timer:
 
         stop_time = default_timer()
         actual_time = format_time_seconds(stop_time - start_time + 0.05)
-        # logging.debug(f"Shallow time: {Timer._format_time_deciseconds(self._shallow_time)}")
         self._variable.set(actual_time)
         if not src.globals.pressed_escape:
             src.globals.can_save_solve_now = True
