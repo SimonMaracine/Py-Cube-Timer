@@ -1,7 +1,7 @@
 import threading
 import logging
 import math
-import sys
+import time
 import tkinter as tk
 from timeit import default_timer
 
@@ -12,13 +12,6 @@ DEFAULT_INSPECTION_COLOR = "red"
 
 
 class Timer:
-
-    if sys.platform == "win32":
-        WAIT_TIME_INSPECTION = 0.89
-        WAIT_TIME_SOLVE = 0.089
-    else:
-        WAIT_TIME_INSPECTION = 0.992
-        WAIT_TIME_SOLVE = 0.0993
 
     def __init__(self, variable: tk.StringVar):
         self._variable = variable
@@ -66,23 +59,35 @@ class Timer:
     def _run(self):
         logging.debug("Started timer thread")
 
+        current_time = 0.0
+        first = True
+
         # If inspection is enabled, do this first
         if self.with_inspection:
             # Set variable before loop so that it displays 15
             self._variable.set(str(self._inspection_time))
 
             while self._inspecting:
-                self._inspection_exit_event.wait(Timer.WAIT_TIME_INSPECTION)
-                self._inspection_time -= 1
-                if self._inspection_time >= 0:
-                    self._variable.set(str(self._inspection_time))
+                if time.time() - current_time > 1.0 and not first:
+                    self._inspection_time -= 1
+                    if self._inspection_time >= 0:
+                        self._variable.set(str(self._inspection_time))
+                    current_time = time.time()
+                    self._inspection_exit_event.wait(0.06)
+
+                # This is to make sure that 15 is displayed
+                if first:
+                    time.sleep(0.9)
+                    first = False
 
         start_time = default_timer()
 
         while self._running:
-            self._timing_exit_event.wait(Timer.WAIT_TIME_SOLVE)
-            self._shallow_time += 1
-            self._variable.set(Timer._format_time_deciseconds(self._shallow_time))
+            if time.time() - current_time > 0.1:
+                self._shallow_time += 1
+                self._variable.set(Timer._format_time_deciseconds(self._shallow_time))
+                current_time = time.time()
+                self._timing_exit_event.wait(0.02)
 
         stop_time = default_timer()
         actual_time = format_time_seconds(stop_time - start_time + 0.05)
