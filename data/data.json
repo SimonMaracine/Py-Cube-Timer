@@ -1,12 +1,12 @@
 {
-  "last_session": "test",
+  "last_session": "Simon",
   "timer_size": 120,
   "scramble_size": 28,
   "enable_inspection": true,
-  "background_color": "#f0716e",
-  "foreground_color": "#000000",
+  "background_color": "#4100ed",
+  "foreground_color": "#e9ce00",
   "enable_backup": false,
   "backup_path": "",
-  "ready_color": "green",
-  "inspection_color": "red"
+  "ready_color": "#00ff00",
+  "inspection_color": "#3c0000"
 }

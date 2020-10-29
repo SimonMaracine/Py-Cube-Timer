@@ -789,6 +789,7 @@ class MainApplication(tk.Frame):
         self.lbl_scramble.configure(font=f"Times, {scramble_size}")
         self.timer.with_inspection = enable_inspection
         self.root.tk_setPalette(background=background_color, foreground=foreground_color)
+        self.foreground_color = foreground_color
         self.enable_backup = enable_backup
         self.backup_path = backup_path
         self.timer_ready_color = ready_color
