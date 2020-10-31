@@ -130,7 +130,7 @@ class MainApplication(tk.Frame):
 
         # Statistics
         frm_statistics = tk.Frame(frm_left_side)
-        frm_statistics.grid(row=1, column=0)
+        frm_statistics.grid(row=1, column=0, padx=(10, 10))
 
         lbl_current = tk.Label(frm_statistics, text="current", font="Times, 14")
         lbl_current.grid(row=0, column=1)
