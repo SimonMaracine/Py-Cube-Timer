@@ -313,7 +313,7 @@ class MainApplication(tk.Frame):
             return
 
         # Update left GUI list
-        tk.Label(self.frm_indices, text=f"{self.solve_index}.", font="Times, 14") \
+        tk.Label(self.frm_indices, text=f"{self.solve_index}. ", font="Times, 14") \
             .grid(row=self.MAX_SOLVES - self.solve_index, column=0, sticky="W")
 
         lbl_solve = tk.Label(self.frm_solves, text=f"{solve_time}", font="Times, 14")
@@ -425,8 +425,8 @@ class MainApplication(tk.Frame):
             for i in range(0, len(self.session_data.solves) - index + 1):
                 label: tk.Label = row_widget_dict[self.MAX_SOLVES - index - i - 1]
 
-                number_str = label["text"].rstrip(".")
-                index_text = str(int(number_str) - 1) + "."
+                number_str = label["text"].rstrip(". ")
+                index_text = str(int(number_str) - 1) + ". "
                 label.configure(text=index_text)
 
                 current_row = label.grid_info()["row"]
@@ -770,7 +770,7 @@ class MainApplication(tk.Frame):
         # Fill left GUI list
         solve: Solve
         for solve in session_data.solves[-40:]:
-            tk.Label(self.frm_indices, text=f"{self.solve_index}.", font="Times, 14") \
+            tk.Label(self.frm_indices, text=f"{self.solve_index}. ", font="Times, 14") \
                 .grid(row=self.MAX_SOLVES - self.solve_index, column=0, sticky="W")  # TODO maybe should be -1
 
             lbl_solve = tk.Label(self.frm_solves, text=f"{solve.time}", font="Times, 14")
@@ -791,7 +791,7 @@ class MainApplication(tk.Frame):
         solves_loaded_now = 0
         solve: Solve
         for solve in reversed(self.SOLVES_ON_LOAD[-self.solves_loaded - 40:-self.solves_loaded]):
-            tk.Label(self.frm_indices, text=f"{solve_index}.", font="Times, 14") \
+            tk.Label(self.frm_indices, text=f"{solve_index}. ", font="Times, 14") \
                 .grid(row=self.MAX_SOLVES - solve_index, column=0, sticky="W")
 
             lbl_solve = tk.Label(self.frm_solves, text=f"{format_time_seconds(solve.raw_time)}", font="Times, 14")
