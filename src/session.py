@@ -76,8 +76,8 @@ def dump_data(file_name: str, solve: Solve):
 
 def remove_solve_out_of_session(file_name: str, index: int):
     """
-    index is from 1 to 9997
-    -1 is handled separately; don't put negative numbers except for -1/
+    index is from 1 to 9997.
+    -1 is handled separately; don't put negative numbers except for -1.
 
     """
     with open(join(_SESSIONS_PATH, file_name), "r+") as file:

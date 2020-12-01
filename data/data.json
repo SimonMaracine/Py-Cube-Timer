@@ -3,10 +3,10 @@
   "timer_size": 120,
   "scramble_size": 28,
   "enable_inspection": true,
-  "background_color": "#4100ed",
-  "foreground_color": "#e9ce00",
+  "background_color": "#f0f0ed",
+  "foreground_color": "#000000",
   "enable_backup": false,
   "backup_path": "",
-  "ready_color": "#00ff00",
-  "inspection_color": "#3c0000"
+  "ready_color": "green",
+  "inspection_color": "red"
 }

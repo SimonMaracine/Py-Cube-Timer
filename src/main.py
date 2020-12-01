@@ -6,7 +6,7 @@ import copy
 import webbrowser
 import tkinter as tk
 from tkinter import messagebox
-from typing import Optional
+from typing import Optional, List
 from os.path import join
 
 import src.globals
@@ -202,11 +202,14 @@ class MainApplication(tk.Frame):
         # self.frm_ao12 = tk.Frame(self.frm_canvas_frame)
         # self.frm_ao12.grid(row=0, column=3)
 
-        self.solve_index = 1
+        self.solve_index = 1  # Next solve index to be added (last one in the list + 1)
         self.MAX_SOLVES = 9997
+
+        # These two are used in the logic for loading more solves; they don't need to be updated when a solve is removed
         self.solves_loaded = 0
-        self.SOLVES_ON_LOAD = None
-        self.btn_more = None
+        self.SOLVES_ON_LOAD: Optional[List[Solve]] = None
+
+        self.btn_more: Optional[tk.Button] = None
 
         # Timer area
         self.var_time = tk.StringVar(frm_timer, value="0.00")
@@ -310,7 +313,7 @@ class MainApplication(tk.Frame):
             return
 
         # Update left GUI list
-        tk.Label(self.frm_indices, text=f"{self.solve_index}. ", font="Times, 14") \
+        tk.Label(self.frm_indices, text=f"{self.solve_index}.", font="Times, 14") \
             .grid(row=self.MAX_SOLVES - self.solve_index, column=0, sticky="W")
 
         lbl_solve = tk.Label(self.frm_solves, text=f"{solve_time}", font="Times, 14")
@@ -361,7 +364,7 @@ class MainApplication(tk.Frame):
 
     def remove_solve_out_of_session(self, index: int, parent: tk.Toplevel = None) -> bool:
         """
-        index is from 1 to 9997
+        index is from 1 to 9997.
         -1 is handled separately; don't put negative numbers except for -1.
 
         """
@@ -378,26 +381,30 @@ class MainApplication(tk.Frame):
             return False
 
         # Update left GUI list
+        # Search for the last widget in the list (the lowest row) and destroy it
         time_labels = self.frm_solves.winfo_children()
         index_labels = self.frm_indices.winfo_children()
         assert time_labels
         assert index_labels
 
-        # Search for the last widget in the list (the lowest row) and destroy it
         rows = map(lambda widget: widget.grid_info()["row"], time_labels)
         time_row_widget_dict = {row: widget for row, widget in zip(rows, time_labels)}
-        time_last_widget_row = min(time_row_widget_dict.keys())
+        time_lowest_widget_row = min(time_row_widget_dict.keys())
 
         rows = map(lambda widget: widget.grid_info()["row"], index_labels)
         index_row_widget_dict = {row: widget for row, widget in zip(rows, index_labels)}
-        index_last_widget_row = min(index_row_widget_dict.keys())
+        index_lowest_widget_row = min(index_row_widget_dict.keys())
 
         if index == -1:
-            time_row_widget_dict[time_last_widget_row].destroy()
-            index_row_widget_dict[time_last_widget_row].destroy()
+            time_row_widget_dict[time_lowest_widget_row].destroy()
+            index_row_widget_dict[index_lowest_widget_row].destroy()
         else:
-            time_row_widget_dict[index_last_widget_row + len(self.session_data.solves) - index].destroy()
-            index_row_widget_dict[index_last_widget_row + len(self.session_data.solves) - index].destroy()
+            time_row_widget_dict[self.MAX_SOLVES - index].destroy()
+            index_row_widget_dict[self.MAX_SOLVES - index].destroy()
+
+        # Delete these, so that we don't get confused
+        del index_row_widget_dict, time_row_widget_dict, rows, index_lowest_widget_row, time_lowest_widget_row, \
+            index_labels, time_labels
 
         self.solve_index -= 1
 
@@ -416,9 +423,29 @@ class MainApplication(tk.Frame):
             rows = list(map(lambda widget: widget.grid_info()["row"], index_labels))
             row_widget_dict = {row: widget for row, widget in zip(rows, index_labels)}
             for i in range(0, len(self.session_data.solves) - index + 1):
-                label = row_widget_dict[index_last_widget_row + len(self.session_data.solves) - index - i]
-                index_text = str(int(label["text"][0:-2]) - 1) + "."
+                label: tk.Label = row_widget_dict[self.MAX_SOLVES - index - i - 1]
+
+                number_str = label["text"].rstrip(".")
+                index_text = str(int(number_str) - 1) + "."
                 label.configure(text=index_text)
+
+                current_row = label.grid_info()["row"]
+                current_column = label.grid_info()["column"]
+                label.grid(row=current_row + 1, column=current_column)
+
+            time_labels = self.frm_solves.winfo_children()
+            rows = list(map(lambda widget: widget.grid_info()["row"], time_labels))
+            row_widget_dict = {row: widget for row, widget in zip(rows, time_labels)}
+            actual_index = index
+            for i in range(0, len(self.session_data.solves) - index + 1):
+                label: tk.Label = row_widget_dict[self.MAX_SOLVES - index - i - 1]
+
+                label.bind("<Button-1>", lambda event, ind=actual_index: self.inspect_solve(ind))
+                actual_index += 1
+
+                current_row = label.grid_info()["row"]
+                current_column = label.grid_info()["column"]
+                label.grid(row=current_row + 1, column=current_column)
 
         # Update these which don't always show
         if len(self.session_data.solves) < 5:
@@ -435,10 +462,7 @@ class MainApplication(tk.Frame):
 
         assert self.session_data.name
         try:
-            if index == -1:
-                remove_solve_out_of_session(self.session_data.name + ".json", -1)
-            else:
-                remove_solve_out_of_session(self.session_data.name + ".json", index)
+            remove_solve_out_of_session(self.session_data.name + ".json", index)
         except FileNotFoundError:
             logging.error("Could not remove the solve from the session, because the file is missing")
             messagebox.showerror("Saving Failure", "Could not remove the solve from the session, "
@@ -733,6 +757,7 @@ class MainApplication(tk.Frame):
             self.btn_more = tk.Button(self.frm_canvas_frame, text="More", command=self.load_more_solves)
             self.btn_more.grid(row=1, column=0, columnspan=2)
         else:
+            # This is useless, because you can't load more solves anyway
             self.solves_loaded = len(session_data.solves)
 
             # Do this, because btn_more might stick from the previous session list
@@ -740,16 +765,16 @@ class MainApplication(tk.Frame):
                 self.btn_more.destroy()
                 self.btn_more = None
 
-        self.SOLVES_ON_LOAD = copy.copy(session_data.solves)
+        self.SOLVES_ON_LOAD = copy.copy(session_data.solves)  # Only a shallow copy needed
 
         # Fill left GUI list
         solve: Solve
         for solve in session_data.solves[-40:]:
-            tk.Label(self.frm_indices, text=f"{self.solve_index}. ", font="Times, 14") \
-                .grid(row=self.MAX_SOLVES - self.solve_index, column=0, sticky="W")
+            tk.Label(self.frm_indices, text=f"{self.solve_index}.", font="Times, 14") \
+                .grid(row=self.MAX_SOLVES - self.solve_index, column=0, sticky="W")  # TODO maybe should be -1
 
             lbl_solve = tk.Label(self.frm_solves, text=f"{solve.time}", font="Times, 14")
-            lbl_solve.grid(row=self.MAX_SOLVES - self.solve_index, column=0, sticky="W")
+            lbl_solve.grid(row=self.MAX_SOLVES - self.solve_index, column=0, sticky="W")  # TODO maybe should be -1
             lbl_solve.bind("<Button-1>", lambda event, index=self.solve_index: self.inspect_solve(index))  # A bit hacky
 
             self.solve_index += 1
@@ -766,7 +791,7 @@ class MainApplication(tk.Frame):
         solves_loaded_now = 0
         solve: Solve
         for solve in reversed(self.SOLVES_ON_LOAD[-self.solves_loaded - 40:-self.solves_loaded]):
-            tk.Label(self.frm_indices, text=f"{solve_index}. ", font="Times, 14") \
+            tk.Label(self.frm_indices, text=f"{solve_index}.", font="Times, 14") \
                 .grid(row=self.MAX_SOLVES - solve_index, column=0, sticky="W")
 
             lbl_solve = tk.Label(self.frm_solves, text=f"{format_time_seconds(solve.raw_time)}", font="Times, 14")
@@ -796,12 +821,13 @@ class MainApplication(tk.Frame):
         self.timer_inspection_color = inspection_color
 
     def inspect_solve(self, index: int):
+        print(index)
         top_level = tk.Toplevel(self.root)
         InspectSolve(top_level, index, self.session_data.solves[index - 1], self.remove_solve_out_of_session,
                      self.root.winfo_x() + 50, self.root.winfo_y() + 50)
 
     # Code copied from the internet and modified
-    def kt_is_pressed(self):
+    def kt_is_pressed(self) -> float:
         return time.time() - self.last_press_time < 0.1
 
     def kt_report_key_press(self, event):
