@@ -821,7 +821,6 @@ class MainApplication(tk.Frame):
         self.timer_inspection_color = inspection_color
 
     def inspect_solve(self, index: int):
-        print(index)
         top_level = tk.Toplevel(self.root)
         InspectSolve(top_level, index, self.session_data.solves[index - 1], self.remove_solve_out_of_session,
                      self.root.winfo_x() + 50, self.root.winfo_y() + 50)
