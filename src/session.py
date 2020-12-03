@@ -14,6 +14,7 @@ from src.timer import interpret_time_in_seconds
 _SESSIONS_PATH = join("data", "sessions")
 _EMPTY_SESSION = {
     "name": "",
+    "type": "3x3x3",
     # All these times are formatted
     "solves": []
 }
@@ -30,6 +31,7 @@ class Solve:
 @dataclasses.dataclass
 class SessionData:
     name: str
+    type: str
     solves: List[Solve]  # Solve times can sometimes contain only one decimal
     all_ao5: List[float]
     all_ao12: List[float]
@@ -53,7 +55,7 @@ def create_new_session(name: str, check_first: bool) -> SessionData:
         data["name"] = name
         json.dump(data, file, indent=2)
 
-    return SessionData(name, [], [], [])
+    return SessionData(name, "3x3x3", [], [], [])
 
 
 def dump_data(file_name: str, solve: Solve):
@@ -67,8 +69,12 @@ def dump_data(file_name: str, solve: Solve):
         file.seek(0)
 
         dictionary = copy.copy(solve.__dict__)
-        del dictionary["raw_time"]  # Don't dump raw_time
-        contents["solves"].append(dictionary)
+        try:
+            del dictionary["raw_time"]  # Don't dump raw_time
+            contents["solves"].append(dictionary)
+        except KeyError as err:
+            logging.error(f"Missing entry: {err}")
+            raise
 
         json.dump(contents, file, indent=2)
         file.truncate()
@@ -89,12 +95,16 @@ def remove_solve_out_of_session(file_name: str, index: int):
 
         file.seek(0)
 
-        if index == -1:
-            logging.debug(f"Removing solve {contents['solves'][index]}")
-            del contents["solves"][index]
-        else:
-            logging.debug(f"Removing solve {contents['solves'][index - 1]}")
-            del contents["solves"][index - 1]
+        try:
+            if index == -1:
+                logging.debug(f"Removing solve {contents['solves'][index]}")
+                del contents["solves"][index]
+            else:
+                logging.debug(f"Removing solve {contents['solves'][index - 1]}")
+                del contents["solves"][index - 1]
+        except KeyError as err:
+            logging.error(f"Missing entry: {err}")
+            raise
 
         json.dump(contents, file, indent=2)
         file.truncate()  # Don't forget this!
@@ -116,6 +126,21 @@ def rename_session(source_name: str, destination_name: str):
         file.seek(0)
 
         contents["name"] = destination_name
+        json.dump(contents, file, indent=2)
+        file.truncate()
+
+
+def change_type(file_name: str, scramble_type: str):
+    with open(join(_SESSIONS_PATH, file_name), "r+") as file:
+        try:
+            contents = json.load(file)
+        except json.decoder.JSONDecodeError:
+            logging.error(f'File "{file_name}" is corrupted')
+            raise FileCorruptedError  # Let the caller handle this error
+
+        file.seek(0)
+
+        contents["type"] = scramble_type
         json.dump(contents, file, indent=2)
         file.truncate()
 
@@ -188,6 +213,7 @@ def load_session_data(file_name: str) -> Optional[SessionData]:
 
     try:
         name = contents["name"]
+        scramble_type = contents["type"]
         # Solve times can sometimes contain only one decimal
         solves: List[Solve] = [Solve(time=solve["time"], scramble=solve["scramble"], date=solve["date"],
                                      raw_time=interpret_time_in_seconds(solve["time"])) for solve in contents["solves"]]
@@ -196,18 +222,18 @@ def load_session_data(file_name: str) -> Optional[SessionData]:
         logging.error(f"Missing entry: {err}")
         return None
     else:
-        return SessionData(name, solves, [], [])
+        return SessionData(name, scramble_type, solves, [], [])
 
 
 def session_exists(name: str) -> bool:
     return isfile(join(_SESSIONS_PATH, name + ".json"))
 
 
-def backup_session(session_file: str, folder_path: str):
+def backup_session(file_name: str, folder_path: str):
     date = datetime.datetime.now().date()
 
-    source = join(_SESSIONS_PATH, session_file)
-    destination = join(folder_path, "backup_" + f"{date.year}-{date.month}" + "_" + session_file)
+    source = join(_SESSIONS_PATH, file_name)
+    destination = join(folder_path, "backup_" + f"{date.year}-{date.month}" + "_" + file_name)
 
     try:
         shutil.copyfile(source, destination)

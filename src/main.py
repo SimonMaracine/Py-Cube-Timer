@@ -11,10 +11,10 @@ from os.path import join
 
 import src.globals
 from src.timer import Timer, interpret_time_in_seconds, format_time_seconds, DEFAULT_READY_COLOR, DEFAULT_INSPECTION_COLOR
-from src.scramble import generate_scramble
+from src.scramble import generate_3x3x3_scramble, generate_4x4x4_scramble
 from src.session import create_new_session, dump_data, SessionData, Solve, remember_last_session, get_last_session, \
     load_session_data, remove_solve_out_of_session, rename_session, destroy_session, backup_session, \
-    FileCorruptedError, SameFileError
+    FileCorruptedError, SameFileError, change_type
 from src.select_session import SelectSession, Mode
 from src.settings import Settings, get_settings
 from src.data import data_folder_exists, recreate_data_folder, DEFAULT_BACKGROUND_COLOR, DEFAULT_TIMER_SIZE, \
@@ -116,7 +116,18 @@ class MainApplication(tk.Frame):
         self.root.tk_setPalette(background=background_color, foreground=self.foreground_color)
 
         # Scramble area
-        self.var_scramble = tk.StringVar(frm_scramble, value=generate_scramble())
+        frm_scramble_buttons = tk.Frame(frm_scramble)
+        frm_scramble_buttons.pack()
+
+        # Needed by the OptionMenu below
+        self.var_scrtype = tk.StringVar(frm_scramble_buttons, value="3x3x3")  # Default is this, but it may be set after load
+
+        tk.OptionMenu(frm_scramble_buttons, self.var_scrtype, "3x3x3", "4x4x4", command=self.on_scramble_type_change) \
+            .grid(row=0, column=0)
+
+        tk.Button(frm_scramble_buttons, text="Generate Next", command=self.generate_next_scramble).grid(row=0, column=1)
+
+        self.var_scramble = tk.StringVar(frm_scramble, value=generate_3x3x3_scramble())  # It may be set later after load
         self.lbl_scramble = tk.Label(frm_scramble, textvariable=self.var_scramble, font=f"Times, {scramble_size}")
         self.lbl_scramble.pack()
 
@@ -301,6 +312,30 @@ class MainApplication(tk.Frame):
             self.timer.stop()
         self.var_time.set("0.00")
 
+    def on_scramble_type_change(self, value: str):
+        if value == "3x3x3":
+            self.var_scramble.set(generate_3x3x3_scramble())
+        elif value == "4x4x4":
+            self.var_scramble.set(generate_4x4x4_scramble())
+
+        try:
+            self.session_data.type = value
+        except AttributeError:  # It is None
+            return
+
+        try:
+            change_type(self.session_data.name + ".json", value)
+        except FileCorruptedError:
+            logging.error("Could not save the scramble type, because the session file is corrupted")
+            messagebox.showerror("Saving Failure", "Could not save the scramble type, because the session file is corrupted",
+                                 parent=self.root)
+
+    def generate_next_scramble(self):
+        if self.var_scrtype.get() == "3x3x3":
+            self.var_scramble.set(generate_3x3x3_scramble())
+        elif self.var_scrtype.get() == "4x4x4":
+            self.var_scramble.set(generate_4x4x4_scramble())
+
     def change_timer_color(self, color: str):
         self.lbl_time.configure(foreground=color)
 
@@ -348,11 +383,14 @@ class MainApplication(tk.Frame):
             logging.error("Could not save the solve, because the file is corrupted")
             messagebox.showerror("Saving Failure", "Could not save the solve, because the file is corrupted.",
                                  parent=self.root)
+        except KeyError:
+            messagebox.showerror("Saving Failure", "Could not save the solve, because there is a missing key in the file.",
+                                 parent=self.root)
         else:
             logging.info("Saved solve")
 
         # Generate new scramble
-        self.var_scramble.set(generate_scramble())
+        self.generate_next_scramble()
 
         # Backup the session, if appropriate
         if len(self.session_data.solves) % 5 == 0:  # Magic number :O
@@ -470,6 +508,9 @@ class MainApplication(tk.Frame):
         except FileCorruptedError:
             logging.error("Could not remove the solve, because the file is corrupted")
             messagebox.showerror("Saving Failure", "Could not remove the solve, because the file is corrupted.",
+                                 parent=self.root)
+        except KeyError:
+            messagebox.showerror("Saving Failure", "Could not remove the solve, because there is a missing key in the file.",
                                  parent=self.root)
 
         return True
@@ -693,6 +734,9 @@ class MainApplication(tk.Frame):
                 messagebox.showerror("Backup Failure", "Couldn't backup the session, because the backup folder "
                                      "is not writable (permission denied).", parent=self.root)
                 return
+            except AttributeError:  # It is None
+                messagebox.showerror("Backup Failure", "There is no session in use. Please select a session.",
+                                     parent=self.root)
 
             logging.info(f"Session backed up in {self.backup_path}")
             return  # Success, so don't continue messaging that backup is disabled
@@ -782,6 +826,13 @@ class MainApplication(tk.Frame):
         # Fill statistics
         if session_data.solves:
             self.update_statistics(session_data)
+
+        # Set this, so that it displays the correct scramble type on load
+        self.var_scrtype.set(session_data.type)
+        if session_data.type == "4x4x4":
+            self.var_scramble.set(generate_4x4x4_scramble())
+        else:  # It may be any string...
+            self.var_scramble.set(generate_3x3x3_scramble())
 
         self.session_data = session_data
 
