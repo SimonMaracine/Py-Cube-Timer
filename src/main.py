@@ -784,6 +784,7 @@ class MainApplication(tk.Frame):
         self.var_session_name.set(name)
 
         self.clear_left_UI()
+        self.on_scramble_type_change(self.var_scrtype.get())  # Call this manually to write to the file and to session_data
 
     def load_session(self, name: str):
         session_data = load_session_data(name + ".json")
