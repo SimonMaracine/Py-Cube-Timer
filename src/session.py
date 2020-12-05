@@ -14,7 +14,7 @@ from src.timer import interpret_time_in_seconds
 _SESSIONS_PATH = join("data", "sessions")
 _EMPTY_SESSION = {
     "name": "",
-    "type": "3x3x3",
+    "scramble_type": "3x3x3",
     # All these times are formatted
     "solves": []
 }
@@ -31,7 +31,7 @@ class Solve:
 @dataclasses.dataclass
 class SessionData:
     name: str
-    type: str
+    scramble_type: str
     solves: List[Solve]  # Solve times can sometimes contain only one decimal
     all_ao5: List[float]
     all_ao12: List[float]
@@ -140,7 +140,7 @@ def change_type(file_name: str, scramble_type: str):
 
         file.seek(0)
 
-        contents["type"] = scramble_type
+        contents["scramble_type"] = scramble_type
         json.dump(contents, file, indent=2)
         file.truncate()
 
@@ -213,7 +213,7 @@ def load_session_data(file_name: str) -> Optional[SessionData]:
 
     try:
         name = contents["name"]
-        scramble_type = contents["type"]
+        scramble_type = contents["scramble_type"]
         # Solve times can sometimes contain only one decimal
         solves: List[Solve] = [Solve(time=solve["time"], scramble=solve["scramble"], date=solve["date"],
                                      raw_time=interpret_time_in_seconds(solve["time"])) for solve in contents["solves"]]

@@ -11,7 +11,7 @@ from os.path import join
 
 import src.globals
 from src.timer import Timer, interpret_time_in_seconds, format_time_seconds, DEFAULT_READY_COLOR, DEFAULT_INSPECTION_COLOR
-from src.scramble import generate_3x3x3_scramble, generate_4x4x4_scramble
+from src.scramble import generate_3x3x3_scramble, generate_4x4x4_scramble, generate_2x2x2_scramble
 from src.session import create_new_session, dump_data, SessionData, Solve, remember_last_session, get_last_session, \
     load_session_data, remove_solve_out_of_session, rename_session, destroy_session, backup_session, \
     FileCorruptedError, SameFileError, change_type
@@ -93,10 +93,10 @@ class MainApplication(tk.Frame):
             timer_size, scramble_size, enable_inspection, background_color, self.foreground_color, \
                 enable_backup, backup_path, ready_color, inspection_color = get_settings()
         except FileNotFoundError:
-            messagebox.showerror("Data Error", "The data file was missing.", parent=self.root)
+            messagebox.showerror("Data Error", "The data file is missing.", parent=self.root)
             error = True
         except FileCorruptedError:
-            messagebox.showerror("Data Error", "The data file was corrupted.", parent=self.root)
+            messagebox.showerror("Data Error", "The data file is corrupted.", parent=self.root)
             error = True
         except KeyError:
             messagebox.showerror("Data Error", "Missing entry in data file.", parent=self.root)
@@ -122,7 +122,7 @@ class MainApplication(tk.Frame):
         # Needed by the OptionMenu below
         self.var_scrtype = tk.StringVar(frm_scramble_buttons, value="3x3x3")  # Default is this, but it may be set after load
 
-        tk.OptionMenu(frm_scramble_buttons, self.var_scrtype, "3x3x3", "4x4x4", command=self.on_scramble_type_change) \
+        tk.OptionMenu(frm_scramble_buttons, self.var_scrtype, "3x3x3", "4x4x4", "2x2x2", command=self.on_scramble_type_change) \
             .grid(row=0, column=0)
 
         tk.Button(frm_scramble_buttons, text="Generate Next", command=self.generate_next_scramble).grid(row=0, column=1)
@@ -317,9 +317,11 @@ class MainApplication(tk.Frame):
             self.var_scramble.set(generate_3x3x3_scramble())
         elif value == "4x4x4":
             self.var_scramble.set(generate_4x4x4_scramble())
+        elif value == "2x2x2":
+            self.var_scramble.set(generate_2x2x2_scramble())
 
         try:
-            self.session_data.type = value
+            self.session_data.scramble_type = value
         except AttributeError:  # It is None
             return
 
@@ -327,14 +329,16 @@ class MainApplication(tk.Frame):
             change_type(self.session_data.name + ".json", value)
         except FileCorruptedError:
             logging.error("Could not save the scramble type, because the session file is corrupted")
-            messagebox.showerror("Saving Failure", "Could not save the scramble type, because the session file is corrupted",
-                                 parent=self.root)
+            messagebox.showerror("Saving Failure", "Could not save the scramble type, "
+                                 "because the session file is corrupted.", parent=self.root)
 
     def generate_next_scramble(self):
-        if self.var_scrtype.get() == "3x3x3":
+        if self.var_scrtype.get() == "3x3x3":  # var_scrtype cannot be empty
             self.var_scramble.set(generate_3x3x3_scramble())
         elif self.var_scrtype.get() == "4x4x4":
             self.var_scramble.set(generate_4x4x4_scramble())
+        elif self.var_scrtype.get() == "2x2x2":
+            self.var_scramble.set(generate_2x2x2_scramble())
 
     def change_timer_color(self, color: str):
         self.lbl_time.configure(foreground=color)
@@ -358,7 +362,7 @@ class MainApplication(tk.Frame):
         self.solve_index += 1
 
         if self.solve_index == self.MAX_SOLVES:
-            messagebox.showinfo("Session Ended", "The maximum amount of solves per session has exceeded."
+            messagebox.showinfo("Session Ended", "The maximum amount of solves per session has exceeded. "
                                 "This session is done.", parent=self.root)
             return
 
@@ -504,7 +508,7 @@ class MainApplication(tk.Frame):
         except FileNotFoundError:
             logging.error("Could not remove the solve from the session, because the file is missing")
             messagebox.showerror("Saving Failure", "Could not remove the solve from the session, "
-                                                   "because the file is missing.", parent=self.root)
+                                 "because the file is missing.", parent=self.root)
         except FileCorruptedError:
             logging.error("Could not remove the solve, because the file is corrupted")
             messagebox.showerror("Saving Failure", "Could not remove the solve, because the file is corrupted.",
@@ -741,7 +745,7 @@ class MainApplication(tk.Frame):
             logging.info(f"Session backed up in {self.backup_path}")
             return  # Success, so don't continue messaging that backup is disabled
         else:  # The string was empty
-            logging.error("Couldn't backup the session, because the path is not specified.")
+            logging.error("Couldn't backup the session, because the path is not specified")
             messagebox.showerror("No Backup Folder", "Couldn't backup the session, because "
                                  "the path is not specified.", parent=self.root)
             return
@@ -828,9 +832,11 @@ class MainApplication(tk.Frame):
             self.update_statistics(session_data)
 
         # Set this, so that it displays the correct scramble type on load
-        self.var_scrtype.set(session_data.type)
-        if session_data.type == "4x4x4":
+        self.var_scrtype.set(session_data.scramble_type)
+        if session_data.scramble_type == "4x4x4":
             self.var_scramble.set(generate_4x4x4_scramble())
+        elif session_data.scramble_type == "2x2x2":
+            self.var_scramble.set(generate_2x2x2_scramble())
         else:  # It may be any string...
             self.var_scramble.set(generate_3x3x3_scramble())
 

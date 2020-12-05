@@ -44,7 +44,7 @@ class _3x3x3Move:
             return other.basic_move == _3x3x3Letter.F
 
 
-_ALL_3x3x3_BASIC_MOVES = [move for move in _3x3x3Letter]
+_ALL_3x3x3_MOVES = [move for move in _3x3x3Letter]
 _ALL_MODIFIERS = [modifier for modifier in _Modifier]
 
 
@@ -153,12 +153,51 @@ def generate_4x4x4_scramble() -> str:
     return " ".join(final)
 
 
-def _add_move(moves: List[Union[_3x3x3Move, _4x4x4Move]], move_type: Union[Type[_3x3x3Move], Type[_4x4x4Move]]) -> int:
+class _2x2x2Letter(enum.Enum):
+    R = "R"
+    U = "U"
+    F = "F"
+
+
+@dataclasses.dataclass
+class _2x2x2Move:
+    basic_move: _2x2x2Letter
+    modifier: _Modifier
+
+    def combined(self) -> str:
+        return self.basic_move.value + self.modifier.value
+
+
+_ALL_2x2x2_MOVES = [move for move in _2x2x2Letter]
+
+
+def generate_2x2x2_scramble() -> str:
+    moves: List[_2x2x2Move] = []
+
+    while len(moves) < 9:
+        while True:
+            move = _2x2x2Move(random.choice(_ALL_2x2x2_MOVES), random.choice(_ALL_MODIFIERS))
+
+            try:
+                if moves[-1].basic_move == move.basic_move:
+                    continue
+            except IndexError:
+                pass
+
+            moves.append(move)
+            break
+
+    final = [move.combined() for move in moves]
+    return " ".join(final)
+
+
+def _add_move(moves: List[Union[_3x3x3Move, _4x4x4Move]],
+              move_type: Union[Type[_3x3x3Move], Type[_4x4x4Move]]) -> int:
     """
     Return 0 means break and return 1 means continue.
 
     """
-    move = move_type(random.choice(_ALL_3x3x3_BASIC_MOVES), random.choice(_ALL_MODIFIERS))
+    move = move_type(random.choice(_ALL_3x3x3_MOVES), random.choice(_ALL_MODIFIERS))
 
     try:
         if moves[-1].basic_move == move.basic_move:
