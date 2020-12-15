@@ -38,6 +38,7 @@ class MainApplication(tk.Frame):
         self.columnconfigure(1, weight=1)
         self.rowconfigure(0, weight=0)
         self.rowconfigure(1, weight=1)
+        self.rowconfigure(2, weight=0)
 
         self.root.option_add("*tearOff", False)
         self.root.title("Py-Cube-Timer")
@@ -77,7 +78,7 @@ class MainApplication(tk.Frame):
 
         # Main frames
         frm_left_side = tk.Frame(self, relief="ridge", bd=3)
-        frm_left_side.grid(row=0, column=0, rowspan=2, sticky="wns")
+        frm_left_side.grid(row=0, column=0, rowspan=3, sticky="wns")
         frm_left_side.rowconfigure(3, weight=1)
 
         frm_scramble = tk.Frame(self, relief="ridge", bd=3)
@@ -85,6 +86,9 @@ class MainApplication(tk.Frame):
 
         frm_timer = tk.Frame(self)
         frm_timer.grid(row=1, column=1)
+
+        self.frm_event = tk.Frame(self, relief="ridge", bd=3, height=33)
+        self.frm_event.grid(row=2, column=1, sticky="wes")
 
         # Get settings from data
         error = False
@@ -311,6 +315,7 @@ class MainApplication(tk.Frame):
             src.globals.pressed_escape = True
             self.timer.stop()
         self.var_time.set("0.00")
+        self.change_timer_color(self.foreground_color)
 
     def on_scramble_type_change(self, value: str):
         if value == "3x3x3":
@@ -331,6 +336,12 @@ class MainApplication(tk.Frame):
             logging.error("Could not save the scramble type, because the session file is corrupted")
             messagebox.showerror("Saving Failure", "Could not save the scramble type, "
                                  "because the session file is corrupted.", parent=self.root)
+
+    def show_event(self, text: str):
+        label = tk.Label(self.frm_event, text=text, font="Times, 14")
+        label.pack()
+
+        threading.Timer(5.0, lambda: label.destroy()).start()
 
     def generate_next_scramble(self):
         if self.var_scrtype.get() == "3x3x3":  # var_scrtype cannot be empty
@@ -373,7 +384,7 @@ class MainApplication(tk.Frame):
         self.session_data.solves.append(Solve(time=solve_time, scramble=scramble, date=date,
                                               raw_time=interpret_time_in_seconds(solve_time)))
 
-        self.update_statistics(self.session_data)
+        self.update_statistics(self.session_data, True)
 
         assert self.session_data.name
         try:
@@ -455,7 +466,7 @@ class MainApplication(tk.Frame):
             del self.session_data.solves[index - 1]
 
         if self.session_data.solves:
-            self.update_statistics(self.session_data)
+            self.update_statistics(self.session_data, False)
 
         # Fix indexing when deleting a solve from the middle
         if index != -1:
@@ -606,7 +617,7 @@ class MainApplication(tk.Frame):
         clone.remove(largest)
         return sum(clone) / 10
 
-    def update_statistics(self, session_data: SessionData):
+    def update_statistics(self, session_data: SessionData, from_save: bool):
         solves_raw = list(map(lambda solve: solve.raw_time, session_data.solves))
 
         # Update mean
@@ -631,6 +642,11 @@ class MainApplication(tk.Frame):
 
         # Update best time, best ao5 and best ao12
         best_time = min(solves_raw)
+        if from_save:
+            if self.var_best_time.get() != "n/a":
+                if best_time < interpret_time_in_seconds(self.var_best_time.get()):
+                    logging.debug(f"New PB of {format_time_seconds(best_time)}!")
+                    self.show_event(f"New PB of {format_time_seconds(best_time)}!")
         self.var_best_time.set(format_time_seconds(best_time))
 
         if len(ao5_list) >= 5:
@@ -640,6 +656,11 @@ class MainApplication(tk.Frame):
                 averages.append(MainApplication.calculate_ao5(five))
 
             best_ao5 = min(averages)
+            if from_save:
+                if self.var_best_ao5.get() != "n/a":
+                    if best_ao5 < interpret_time_in_seconds(self.var_best_ao5.get()):
+                        logging.debug(f"New ao5 best of {format_time_seconds(best_ao5)}!")
+                        self.show_event(f"New ao5 best of {format_time_seconds(best_ao5)}!")
             self.var_best_ao5.set(format_time_seconds(best_ao5))
             session_data.all_ao5 = averages  # Write to session data
         else:
@@ -652,6 +673,11 @@ class MainApplication(tk.Frame):
                 averages.append(MainApplication.calculate_ao12(twelve))
 
             best_ao12 = min(averages)
+            if from_save:
+                if self.var_best_ao12.get() != "n/a":
+                    if best_ao12 < interpret_time_in_seconds(self.var_best_ao12.get()):
+                        logging.debug(f"New ao12 best of {format_time_seconds(best_ao12)}!")
+                        self.show_event(f"New ao12 best of {format_time_seconds(best_ao12)}!")
             self.var_best_ao12.set(format_time_seconds(best_ao12))
             session_data.all_ao12 = averages  # Write to session data
         else:
@@ -738,6 +764,7 @@ class MainApplication(tk.Frame):
                                      parent=self.root)
 
             logging.info(f"Session backed up in {self.backup_path}")
+            self.show_event(f"Session backed up in {self.backup_path}.")
             return  # Success, so don't continue messaging that backup is disabled
         else:  # The string was empty
             logging.error("Couldn't backup the session, because the path is not specified")
@@ -825,7 +852,7 @@ class MainApplication(tk.Frame):
 
         # Fill statistics
         if session_data.solves:
-            self.update_statistics(session_data)
+            self.update_statistics(session_data, False)
 
         # Set this, so that it displays the correct scramble type on load
         self.var_scrtype.set(session_data.scramble_type)
