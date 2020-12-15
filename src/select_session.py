@@ -1,16 +1,16 @@
 import os
 from enum import Enum, auto
 import tkinter as tk
+from os.path import join
 from typing import Callable
-from tkinter import messagebox
-from tkinter import filedialog
+from tkinter import messagebox, filedialog
 
 from src.session import session_exists
 
 
 class Mode(Enum):
-    NEW_SESSION = auto(),
-    OPEN_SESSION = auto(),
+    NEW_SESSION = auto()
+    OPEN_SESSION = auto()
     RENAME_SESSION = auto()
 
 
@@ -67,13 +67,13 @@ class SelectSession(tk.Frame):
         self.on_ok(session_name)
         self.top_level.destroy()
 
-    def on_enter_press(self, event):
+    def on_enter_press(self, _event):
         self.ok()
 
     # For opening mode
     def open_file(self):
         # It doesn't do anything, if it doesn't find the folder, which is annoying
-        file_path: str = filedialog.askopenfilename(initialdir="data/sessions", parent=self.top_level)
+        file_path: str = filedialog.askopenfilename(initialdir=join("data", "sessions"), parent=self.top_level)
 
         if file_path:  # Returned an empty tuple on cancel
             if not file_path.endswith(".json") or f"data{os.sep}sessions" not in file_path:

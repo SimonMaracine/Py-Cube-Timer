@@ -122,8 +122,8 @@ class MainApplication(tk.Frame):
         # Needed by the OptionMenu below
         self.var_scrtype = tk.StringVar(frm_scramble_buttons, value="3x3x3")  # Default is this, but it may be set after load
 
-        tk.OptionMenu(frm_scramble_buttons, self.var_scrtype, "3x3x3", "4x4x4", "2x2x2", command=self.on_scramble_type_change) \
-            .grid(row=0, column=0)
+        tk.OptionMenu(frm_scramble_buttons, self.var_scrtype, "3x3x3", "4x4x4", "2x2x2",
+                      command=self.on_scramble_type_change).grid(row=0, column=0)
 
         tk.Button(frm_scramble_buttons, text="Generate Next", command=self.generate_next_scramble).grid(row=0, column=1)
 
@@ -303,10 +303,10 @@ class MainApplication(tk.Frame):
             else:
                 self.stopped_timer = False
 
-    def on_alt_z_key_press(self, event):
+    def on_alt_z_key_press(self, _event):
         self.remove_last_solve_out_of_session()
 
-    def on_escape_press(self, event):
+    def on_escape_press(self, _event):
         if self.timer.is_running():
             src.globals.pressed_escape = True
             self.timer.stop()
@@ -346,22 +346,22 @@ class MainApplication(tk.Frame):
     def save_solve_in_session(self, solve_time: str):  # solve_time is already formatted
         assert self.session_data is not None
 
-        if self.solve_index == self.MAX_SOLVES:
+        if self.solve_index >= self.MAX_SOLVES:
             messagebox.showerror("Saving Failure", "Could not save the solve, because the "
                                  "amount of solves per session was exceeded.", parent=self.root)
             return
 
         # Update left GUI list
         tk.Label(self.frm_indices, text=f"{self.solve_index}. ", font="Times, 14") \
-            .grid(row=self.MAX_SOLVES - self.solve_index, column=0, sticky="W")
+            .grid(row=self.MAX_SOLVES - self.solve_index, column=0, sticky="w")
 
         lbl_solve = tk.Label(self.frm_solves, text=f"{solve_time}", font="Times, 14")
-        lbl_solve.grid(row=self.MAX_SOLVES - self.solve_index, column=0, sticky="W")
+        lbl_solve.grid(row=self.MAX_SOLVES - self.solve_index, column=0, sticky="w")
         lbl_solve.bind("<Button-1>", lambda event, index=self.solve_index: self.inspect_solve(index))  # A bit hacky
 
         self.solve_index += 1
 
-        if self.solve_index == self.MAX_SOLVES:
+        if self.solve_index >= self.MAX_SOLVES:
             messagebox.showinfo("Session Ended", "The maximum amount of solves per session has exceeded. "
                                 "This session is done.", parent=self.root)
             return
@@ -380,11 +380,9 @@ class MainApplication(tk.Frame):
             dump_data(self.session_data.name + ".json",
                       Solve(solve_time, scramble, date, 0.0))  # dump_data doesn't care about raw_time anyway
         except FileNotFoundError:
-            logging.error("Could not save the solve in session, because the file is missing")
             messagebox.showerror("Saving Failure", "Could not save the solve in session, because the file is missing.",
                                  parent=self.root)
         except FileCorruptedError:
-            logging.error("Could not save the solve, because the file is corrupted")
             messagebox.showerror("Saving Failure", "Could not save the solve, because the file is corrupted.",
                                  parent=self.root)
         except KeyError:
@@ -462,7 +460,7 @@ class MainApplication(tk.Frame):
         # Fix indexing when deleting a solve from the middle
         if index != -1:
             index_labels = self.frm_indices.winfo_children()
-            rows = list(map(lambda widget: widget.grid_info()["row"], index_labels))
+            rows = map(lambda widget: widget.grid_info()["row"], index_labels)
             row_widget_dict = {row: widget for row, widget in zip(rows, index_labels)}
             for i in range(0, len(self.session_data.solves) - index + 1):
                 label: tk.Label = row_widget_dict[self.MAX_SOLVES - index - i - 1]
@@ -476,7 +474,7 @@ class MainApplication(tk.Frame):
                 label.grid(row=current_row + 1, column=current_column)
 
             time_labels = self.frm_solves.winfo_children()
-            rows = list(map(lambda widget: widget.grid_info()["row"], time_labels))
+            rows = map(lambda widget: widget.grid_info()["row"], time_labels)
             row_widget_dict = {row: widget for row, widget in zip(rows, time_labels)}
             actual_index = index
             for i in range(0, len(self.session_data.solves) - index + 1):
@@ -506,11 +504,9 @@ class MainApplication(tk.Frame):
         try:
             remove_solve_out_of_session(self.session_data.name + ".json", index)
         except FileNotFoundError:
-            logging.error("Could not remove the solve from the session, because the file is missing")
             messagebox.showerror("Saving Failure", "Could not remove the solve from the session, "
                                  "because the file is missing.", parent=self.root)
         except FileCorruptedError:
-            logging.error("Could not remove the solve, because the file is corrupted")
             messagebox.showerror("Saving Failure", "Could not remove the solve, because the file is corrupted.",
                                  parent=self.root)
         except KeyError:
@@ -665,7 +661,6 @@ class MainApplication(tk.Frame):
         try:
             last_session_name = get_last_session()
         except RuntimeError:  # There was no last session
-            logging.info("Please select a session")
             messagebox.showinfo("No Session", "Please select or create a new session to use.", parent=self.root)
             return
         except FileCorruptedError:
@@ -820,10 +815,10 @@ class MainApplication(tk.Frame):
         solve: Solve
         for solve in session_data.solves[-40:]:
             tk.Label(self.frm_indices, text=f"{self.solve_index}. ", font="Times, 14") \
-                .grid(row=self.MAX_SOLVES - self.solve_index, column=0, sticky="W")  # TODO maybe should be -1
+                .grid(row=self.MAX_SOLVES - self.solve_index, column=0, sticky="w")  # TODO maybe should be -1
 
             lbl_solve = tk.Label(self.frm_solves, text=f"{solve.time}", font="Times, 14")
-            lbl_solve.grid(row=self.MAX_SOLVES - self.solve_index, column=0, sticky="W")  # TODO maybe should be -1
+            lbl_solve.grid(row=self.MAX_SOLVES - self.solve_index, column=0, sticky="w")  # TODO maybe should be -1
             lbl_solve.bind("<Button-1>", lambda event, index=self.solve_index: self.inspect_solve(index))  # A bit hacky
 
             self.solve_index += 1
@@ -850,10 +845,10 @@ class MainApplication(tk.Frame):
         solve: Solve
         for solve in reversed(self.SOLVES_ON_LOAD[-self.solves_loaded - 40:-self.solves_loaded]):
             tk.Label(self.frm_indices, text=f"{solve_index}. ", font="Times, 14") \
-                .grid(row=self.MAX_SOLVES - solve_index, column=0, sticky="W")
+                .grid(row=self.MAX_SOLVES - solve_index, column=0, sticky="w")
 
             lbl_solve = tk.Label(self.frm_solves, text=f"{format_time_seconds(solve.raw_time)}", font="Times, 14")
-            lbl_solve.grid(row=self.MAX_SOLVES - solve_index, column=0, sticky="W")
+            lbl_solve.grid(row=self.MAX_SOLVES - solve_index, column=0, sticky="w")
             lbl_solve.bind("<Button-1>", lambda event, index=solve_index: self.inspect_solve(index))  # A bit hacky
 
             solve_index -= 1

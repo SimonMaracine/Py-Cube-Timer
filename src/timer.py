@@ -120,15 +120,15 @@ class Timer:
             return f"{seconds}.{deciseconds}"
 
 
-def format_time_seconds(time: float) -> str:
+def format_time_seconds(time_: float) -> str:
     """
     Turns into this: 0:00.00
 
     """
-    if time == math.inf:
+    if time_ == math.inf:
         return "inf"
 
-    fractional, whole = math.modf(time)
+    fractional, whole = math.modf(time_)
 
     minutes = int(whole // 60)
     if minutes:
@@ -143,24 +143,24 @@ def format_time_seconds(time: float) -> str:
         return f"{seconds}.{deciseconds}"
 
 
-def interpret_time_in_seconds(time: str) -> float:
+def interpret_time_in_seconds(time_: str) -> float:
     """
     time is for example 1:17.30
 
     """
-    if time == "inf":
+    if time_ == "inf":
         return math.inf
 
-    colon = time.find(":")
-    dot = time.find(".")
+    colon = time_.find(":")
+    dot = time_.find(".")
 
     if colon != -1:
-        minutes = int(time[0:colon])
-        seconds = int(time[colon + 1:dot])
+        minutes = int(time_[0:colon])
+        seconds = int(time_[colon + 1:dot])
     else:
-        seconds = int(time[0:dot])
+        seconds = int(time_[0:dot])
 
-    deciseconds = float("0." + time[dot + 1:])
+    deciseconds = float("0." + time_[dot + 1:])
 
     if colon != -1:
         return minutes * 60 + seconds + deciseconds

@@ -15,8 +15,7 @@ _SESSIONS_PATH = join("data", "sessions")
 _EMPTY_SESSION = {
     "name": "",
     "scramble_type": "3x3x3",
-    # All these times are formatted
-    "solves": []
+    "solves": []  # All these times are formatted
 }
 
 
@@ -62,9 +61,13 @@ def dump_data(file_name: str, solve: Solve):
     with open(join(_SESSIONS_PATH, file_name), "r+") as file:
         try:
             contents = json.load(file)
+        # Let the caller handle these errors
+        except FileNotFoundError:
+            logging.error("Could not save the solve in session, because the file is missing")
+            raise
         except json.decoder.JSONDecodeError:
             logging.error(f'File "{file_name}" is corrupted')
-            raise FileCorruptedError  # Let the caller handle this error
+            raise FileCorruptedError
 
         file.seek(0)
 
@@ -89,9 +92,13 @@ def remove_solve_out_of_session(file_name: str, index: int):
     with open(join(_SESSIONS_PATH, file_name), "r+") as file:
         try:
             contents = json.load(file)
+        # Let the caller handle these errors
+        except FileNotFoundError:
+            logging.error("Could not remove the solve from the session, because the file is missing")
+            raise
         except json.decoder.JSONDecodeError:
             logging.error(f'File "{file_name}" is corrupted')
-            raise FileCorruptedError  # Let the caller handle this error
+            raise FileCorruptedError
 
         file.seek(0)
 
