@@ -341,7 +341,11 @@ class MainApplication(tk.Frame):
         label = tk.Label(self.frm_event, text=text, font="Times, 14")
         label.pack()
 
-        threading.Timer(5.0, lambda: label.destroy()).start()
+        threading.Timer(5.0, lambda l=label: self.delete_event(l)).start()
+
+    def delete_event(self, label: tk.Label):
+        label.destroy()
+        self.frm_event.configure(height=33)
 
     def generate_next_scramble(self):
         if self.var_scrtype.get() == "3x3x3":  # var_scrtype cannot be empty
