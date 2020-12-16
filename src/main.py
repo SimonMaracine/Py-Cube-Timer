@@ -201,14 +201,14 @@ class MainApplication(tk.Frame):
 
         self.cvs_times = tk.Canvas(frm_times, width=140, borderwidth=0, yscrollcommand=bar_times.set)
         self.cvs_times.pack(side="left", fill="both", expand=True)
-        self.cvs_times.bind_all("<Button-4>", lambda event: self.cvs_times.yview_scroll(-2, "units"))  # FIXME might need to bind to <MouseWheel> on Windows
-        self.cvs_times.bind_all("<Button-5>", lambda event: self.cvs_times.yview_scroll(2, "units"))
+        self.cvs_times.bind_all("<Button-4>", lambda _event: self.cvs_times.yview_scroll(-2, "units"))  # FIXME might need to bind to <MouseWheel> on Windows
+        self.cvs_times.bind_all("<Button-5>", lambda _event: self.cvs_times.yview_scroll(2, "units"))
 
         bar_times.configure(command=self.cvs_times.yview)
 
         self.frm_canvas_frame = tk.Frame(frm_times)
         self.cvs_times.create_window((0, 0), window=self.frm_canvas_frame, anchor="nw")
-        self.frm_canvas_frame.bind("<Configure>", lambda event: self.frame_configure())
+        self.frm_canvas_frame.bind("<Configure>", lambda _event: self.frame_configure())
 
         self.frm_indices = tk.Frame(self.frm_canvas_frame)
         self.frm_indices.grid(row=0, column=0)
@@ -374,7 +374,7 @@ class MainApplication(tk.Frame):
 
         lbl_solve = tk.Label(self.frm_solves, text=f"{solve_time}", font="Times, 14")
         lbl_solve.grid(row=self.MAX_SOLVES - self.solve_index, column=0, sticky="w")
-        lbl_solve.bind("<Button-1>", lambda event, index=self.solve_index: self.inspect_solve(index))  # A bit hacky
+        lbl_solve.bind("<Button-1>", lambda _event, index=self.solve_index: self.inspect_solve(index))  # A bit hacky
 
         self.solve_index += 1
 
@@ -497,7 +497,7 @@ class MainApplication(tk.Frame):
             for i in range(0, len(self.session_data.solves) - index + 1):
                 label: tk.Label = row_widget_dict[self.MAX_SOLVES - index - i - 1]
 
-                label.bind("<Button-1>", lambda event, ind=actual_index: self.inspect_solve(ind))
+                label.bind("<Button-1>", lambda _event, ind=actual_index: self.inspect_solve(ind))
                 actual_index += 1
 
                 current_row = label.grid_info()["row"]
@@ -852,7 +852,7 @@ class MainApplication(tk.Frame):
 
             lbl_solve = tk.Label(self.frm_solves, text=f"{solve.time}", font="Times, 14")
             lbl_solve.grid(row=self.MAX_SOLVES - self.solve_index, column=0, sticky="w")  # TODO maybe should be -1
-            lbl_solve.bind("<Button-1>", lambda event, index=self.solve_index: self.inspect_solve(index))  # A bit hacky
+            lbl_solve.bind("<Button-1>", lambda _event, index=self.solve_index: self.inspect_solve(index))  # A bit hacky
 
             self.solve_index += 1
 
@@ -882,7 +882,7 @@ class MainApplication(tk.Frame):
 
             lbl_solve = tk.Label(self.frm_solves, text=f"{format_time_seconds(solve.raw_time)}", font="Times, 14")
             lbl_solve.grid(row=self.MAX_SOLVES - solve_index, column=0, sticky="w")
-            lbl_solve.bind("<Button-1>", lambda event, index=solve_index: self.inspect_solve(index))  # A bit hacky
+            lbl_solve.bind("<Button-1>", lambda _event, index=solve_index: self.inspect_solve(index))  # A bit hacky
 
             solve_index -= 1
             solves_loaded_now += 1
