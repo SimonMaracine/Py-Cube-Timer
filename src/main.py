@@ -201,6 +201,8 @@ class MainApplication(tk.Frame):
 
         self.cvs_times = tk.Canvas(frm_times, width=140, borderwidth=0, yscrollcommand=bar_times.set)
         self.cvs_times.pack(side="left", fill="both", expand=True)
+        self.cvs_times.bind_all("<Button-4>", lambda event: self.cvs_times.yview_scroll(-2, "units"))  # FIXME might need to bind to <MouseWheel> on Windows
+        self.cvs_times.bind_all("<Button-5>", lambda event: self.cvs_times.yview_scroll(2, "units"))
 
         bar_times.configure(command=self.cvs_times.yview)
 
