@@ -245,7 +245,7 @@ def backup_session(file_name: str, folder_path: str):
     try:
         shutil.copyfile(source, destination)
     except FileNotFoundError:
-        logging.error(f"Could not find file {source}")
+        logging.error(f"Could not find file {source} or the destination path is invalid")
         raise
     except shutil.SameFileError:  # TODO maybe we should prevent this completely instead of catching it
         logging.error(f"Cannot backup in the sessions folder")

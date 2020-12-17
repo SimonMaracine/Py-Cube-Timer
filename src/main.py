@@ -4,6 +4,7 @@ import threading
 import datetime
 import copy
 import webbrowser
+import sys
 import tkinter as tk
 from tkinter import messagebox
 from typing import Optional, List
@@ -201,8 +202,17 @@ class MainApplication(tk.Frame):
 
         self.cvs_times = tk.Canvas(frm_times, width=140, borderwidth=0, yscrollcommand=bar_times.set)
         self.cvs_times.pack(side="left", fill="both", expand=True)
-        self.cvs_times.bind_all("<Button-4>", lambda _event: self.cvs_times.yview_scroll(-2, "units"))  # FIXME might need to bind to <MouseWheel> on Windows
-        self.cvs_times.bind_all("<Button-5>", lambda _event: self.cvs_times.yview_scroll(2, "units"))
+
+        if sys.platform == "linux":
+            self.cvs_times.bind_all("<Button-4>", lambda _event: self.cvs_times.yview_scroll(-2, "units"))
+            self.cvs_times.bind_all("<Button-5>", lambda _event: self.cvs_times.yview_scroll(2, "units"))
+        elif sys.platform == "win32":
+            self.cvs_times.bind_all("<MouseWheel>",
+                                    lambda event: self.cvs_times.yview_scroll(-1 * (event.delta // 50), "units"))
+        elif sys.platform == "darwin":  # I don't care about macOS, but let it be here anyway
+            self.cvs_times.bind_all("<MouseWheel>", lambda event: self.cvs_times.yview_scroll(-1 * event.delta, "units"))
+        else:
+            logging.info("This platform is not supported, though it might work something")
 
         bar_times.configure(command=self.cvs_times.yview)
 
@@ -755,7 +765,7 @@ class MainApplication(tk.Frame):
                 backup_session(self.session_data.name + ".json", self.backup_path)
             except FileNotFoundError:
                 messagebox.showerror("Backup Failure", "Couldn't backup the session, because the session file "
-                                     "is missing.", parent=self.root)
+                                     "is missing or the destination path is invalid.", parent=self.root)
                 return
             except SameFileError:
                 messagebox.showerror("Backup Failure", "Couldn't backup the session, because the backup folder "
