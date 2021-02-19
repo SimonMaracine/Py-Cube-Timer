@@ -23,6 +23,7 @@ from src.data import data_folder_exists, recreate_data_folder, DEFAULT_BACKGROUN
 from src.about import About
 from src.plot import plot
 from src.inspect_solve import InspectSolve
+from src.settings import SettingsConfig
 
 logging.basicConfig(level=logging.DEBUG, format="%(levelname)s:%(lineno)d:%(message)s")
 if not __debug__:
@@ -95,8 +96,10 @@ class MainApplication(tk.Frame):
         error = False
 
         try:
-            timer_size, scramble_size, enable_inspection, background_color, self.foreground_color, \
-                enable_backup, backup_path, ready_color, inspection_color = get_settings()
+            # timer_size, scramble_size, enable_inspection, background_color, self.foreground_color, \
+            #     enable_backup, backup_path, ready_color, inspection_color = get_settings()
+            settings_config = get_settings()
+            self.foreground_color = settings_config.foreground_color
         except FileNotFoundError:
             messagebox.showerror("Data Error", "The data file is missing.", parent=self.root)
             error = True
@@ -108,17 +111,23 @@ class MainApplication(tk.Frame):
             error = True
 
         if error:
-            timer_size = DEFAULT_TIMER_SIZE
-            scramble_size = DEFAULT_SCRAMBLE_SIZE
-            enable_inspection = True
-            background_color = DEFAULT_BACKGROUND_COLOR
-            self.foreground_color = "#000000"
-            enable_backup = False
-            backup_path = ""
-            ready_color = DEFAULT_READY_COLOR
-            inspection_color = DEFAULT_INSPECTION_COLOR
+            # timer_size = DEFAULT_TIMER_SIZE
+            # scramble_size = DEFAULT_SCRAMBLE_SIZE
+            # enable_inspection = True
+            # background_color = DEFAULT_BACKGROUND_COLOR
+            # self.foreground_color = "#000000"
+            # enable_backup = False
+            # backup_path = ""
+            # ready_color = DEFAULT_READY_COLOR
+            # inspection_color = DEFAULT_INSPECTION_COLOR
+            settings_config = SettingsConfig(timer_size=DEFAULT_TIMER_SIZE, scramble_size=DEFAULT_SCRAMBLE_SIZE,
+                                             enable_inspection=True, background_color=DEFAULT_BACKGROUND_COLOR,
+                                             foreground_color="#000000", enable_backup=False, backup_path="",
+                                             ready_color=DEFAULT_READY_COLOR, inspection_color=DEFAULT_INSPECTION_COLOR)
+            self.foreground_color = settings_config.foreground_color
 
-        self.root.tk_setPalette(background=background_color, foreground=self.foreground_color)
+        # noinspection PyUnboundLocalVariable
+        self.root.tk_setPalette(background=settings_config.background_color, foreground=self.foreground_color)
 
         # Scramble area
         frm_scramble_buttons = tk.Frame(frm_scramble)
@@ -133,7 +142,7 @@ class MainApplication(tk.Frame):
         tk.Button(frm_scramble_buttons, text="Generate Next", command=self.generate_next_scramble).grid(row=0, column=1)
 
         self.var_scramble = tk.StringVar(frm_scramble, value=generate_3x3x3_scramble())  # It may be set later after load
-        self.lbl_scramble = tk.Label(frm_scramble, textvariable=self.var_scramble, font=f"Times, {scramble_size}")
+        self.lbl_scramble = tk.Label(frm_scramble, textvariable=self.var_scramble, font=f"Times, {settings_config.scramble_size}")
         self.lbl_scramble.pack()
 
         frm_scramble.bind("<Configure>", self.on_window_resize)
@@ -240,20 +249,20 @@ class MainApplication(tk.Frame):
 
         # Timer area
         self.var_time = tk.StringVar(frm_timer, value="0.00")
-        self.lbl_time = tk.Label(frm_timer, textvariable=self.var_time, font=f"Times, {timer_size}")
+        self.lbl_time = tk.Label(frm_timer, textvariable=self.var_time, font=f"Times, {settings_config.timer_size}")
         self.lbl_time.pack()
 
         self.check_to_save_in_session()
 
         self.timer = Timer(self.var_time)
-        self.timer.with_inspection = enable_inspection
+        self.timer.with_inspection = settings_config.enable_inspection
         self.root.bind("<KeyPress>", self.kt_report_key_press)
         self.root.bind("<KeyRelease>", self.kt_report_key_release)
         self.root.bind("<Alt-z>", self.on_alt_z_key_press)
         self.root.bind("<Escape>", self.on_escape_press)
 
-        self.timer_ready_color = ready_color
-        self.timer_inspection_color = inspection_color
+        self.timer_ready_color = settings_config.ready_color
+        self.timer_inspection_color = settings_config.inspection_color
 
         # Flag to handle timer start
         self.stopped_timer = False
@@ -267,8 +276,8 @@ class MainApplication(tk.Frame):
         self.session_data: Optional[SessionData] = None
 
         # Backup settings
-        self.enable_backup = enable_backup
-        self.backup_path = backup_path
+        self.enable_backup = settings_config.enable_backup
+        self.backup_path = settings_config.backup_path
 
         # Check for data folder
         if not data_folder_exists():
@@ -903,18 +912,16 @@ class MainApplication(tk.Frame):
             self.btn_more.destroy()
             self.btn_more = None
 
-    def apply_settings(self, timer_size: int, scramble_size: int, enable_inspection: bool, background_color: str,
-                       foreground_color: str, enable_backup: bool, backup_path: str, ready_color: str,
-                       inspection_color: str):
-        self.lbl_time.configure(font=f"Times, {timer_size}")
-        self.lbl_scramble.configure(font=f"Times, {scramble_size}")
-        self.timer.with_inspection = enable_inspection
-        self.root.tk_setPalette(background=background_color, foreground=foreground_color)
-        self.foreground_color = foreground_color
-        self.enable_backup = enable_backup
-        self.backup_path = backup_path
-        self.timer_ready_color = ready_color
-        self.timer_inspection_color = inspection_color
+    def apply_settings(self, settings_config: SettingsConfig):
+        self.lbl_time.configure(font=f"Times, {settings_config.timer_size}")
+        self.lbl_scramble.configure(font=f"Times, {settings_config.scramble_size}")
+        self.timer.with_inspection = settings_config.enable_inspection
+        self.root.tk_setPalette(background=settings_config.background_color, foreground=settings_config.foreground_color)
+        self.foreground_color = settings_config.foreground_color
+        self.enable_backup = settings_config.enable_backup
+        self.backup_path = settings_config.backup_path
+        self.timer_ready_color = settings_config.ready_color
+        self.timer_inspection_color = settings_config.inspection_color
 
     def inspect_solve(self, index: int):
         top_level = tk.Toplevel(self.root)
