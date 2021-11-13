@@ -29,8 +29,6 @@ class Settings(tk.Frame):
         error = False
 
         try:
-            # timer_size, scramble_size, enable_inspection, background_color, foreground_color, \
-            #     enable_backup, backup_path, ready_color, inspection_color = get_settings()
             settings_config = get_settings()
         except FileNotFoundError:
             messagebox.showerror("Data Error", "The data file was missing.", parent=self.top_level)
@@ -43,15 +41,6 @@ class Settings(tk.Frame):
             error = True
 
         if error:
-            # timer_size = DEFAULT_TIMER_SIZE
-            # scramble_size = DEFAULT_SCRAMBLE_SIZE
-            # enable_inspection = True
-            # background_color = DEFAULT_BACKGROUND_COLOR
-            # foreground_color = "#000000"
-            # enable_backup = False
-            # backup_path = ""
-            # ready_color = DEFAULT_READY_COLOR
-            # inspection_color = DEFAULT_INSPECTION_COLOR
             settings_config = SettingsConfig(timer_size=DEFAULT_TIMER_SIZE, scramble_size=DEFAULT_SCRAMBLE_SIZE,
                                              enable_inspection=True, background_color=DEFAULT_BACKGROUND_COLOR,
                                              foreground_color="#000000", enable_backup=False, backup_path="",
