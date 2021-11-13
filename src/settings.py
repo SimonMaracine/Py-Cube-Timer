@@ -2,9 +2,7 @@ from __future__ import annotations
 import json
 import logging
 import tkinter as tk
-from tkinter import messagebox
-from tkinter import colorchooser
-from tkinter import filedialog
+from tkinter import messagebox, colorchooser, filedialog
 from typing import Callable
 from dataclasses import dataclass
 
